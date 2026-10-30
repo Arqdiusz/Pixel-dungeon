@@ -24,9 +24,13 @@
   #menu { position:absolute; left:26%; bottom:18%; width:40%; background:#0f380f; border:3px solid #8bac0f; padding:8px; font-size:clamp(9px,1.3vw,13px); display:none; z-index:5; }
   #menu div { padding:4px 6px; cursor:pointer; }
   #menu div:hover { background:#306230; }
-  #sidePanel { flex:1; background:#0f380f; border-left:4px solid #306230; display:flex; flex-direction:column; padding:2%; gap:2%; min-width:230px; overflow:auto; }
+  #sidePanel { flex:1; background:#0f380f; border-left:4px solid #306230; display:flex; flex-direction:column; padding:2%; gap:2%; min-width:250px; overflow:auto; }
   .panelTitle { font-size:clamp(10px,1.4vw,14px); color:#8bac0f; border-bottom:2px solid #306230; padding-bottom:2px; }
-  #stats { font-size:clamp(9px,1.2vw,12px); line-height:1.5; }
+  #previewWrap { display:flex; gap:4%; align-items:center; }
+  #preview { width:38%; aspect-ratio:1; background:#1b4a1b; border:2px solid #306230; }
+  #stats { font-size:clamp(9px,1.1vw,12px); line-height:1.6; flex:1; }
+  .base { color:#c7f0d8; }
+  .bonus { color:#4caf50; cursor:help; }
   #attackBtns { display:flex; flex-direction:column; gap:4px; }
   .atk { background:#306230; border:2px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(9px,1.2vw,12px); padding:6px; cursor:pointer; text-align:left; }
   .atk:active { background:#8bac0f; color:#0f380f; }
@@ -85,12 +89,15 @@
 
   <div id="sidePanel" class="hidden">
     <div class="panelTitle">BOHATER</div>
-    <div id="stats">-</div>
+    <div id="previewWrap">
+      <svg id="preview" viewBox="0 0 16 16"></svg>
+      <div id="stats">-</div>
+    </div>
     <div class="panelTitle">ATAKI (1/2/3)</div>
     <div id="attackBtns">
-      <button class="atk" id="btnLight">1. Lekki atak <small>10 STA</small></button>
+      <button class="atk" id="btnLight">1. Lekki atak <small>-</small></button>
       <button class="atk" id="btnStrong">2. Silny: - <small>-</small></button>
-      <button class="atk" id="btnSpecial">3. Specjalny: Pocisk mocy <small>15 MP</small></button>
+      <button class="atk" id="btnSpecial">3. Specjalny: Pocisk mocy <small>-</small></button>
       <button class="atk" id="btnEnd">Koniec tury (E)</button>
     </div>
     <div class="panelTitle">EKWIPUNEK</div>
@@ -107,6 +114,7 @@ const overlay=document.getElementById('overlay');
 const hud=document.getElementById('hud');
 const dpad=document.getElementById('dpad');
 const sidePanel=document.getElementById('sidePanel');
+const preview=document.getElementById('preview');
 
 const T=32, COLS=20, ROWS=9;
 const SAVE_KEY='pixelDungeonSave';
@@ -143,47 +151,64 @@ const potions={
 function say(t){msg.innerHTML=t;}
 function log(t){say(t);}
 
-function showScreen(s){
-  screen=s;
-  if(s==='menu'){
-    overlay.classList.remove('hidden');
-    hud.classList.add('hidden');dpad.classList.add('hidden');msg.classList.add('hidden');sidePanel.classList.add('hidden');
-    document.getElementById('menuButtons').classList.remove('hidden');
-    document.getElementById('classButtons').classList.add('hidden');
-    document.getElementById('btnContinue').style.display=localStorage.getItem(SAVE_KEY)?'block':'none';
+function rollStats(n){
+  const stats={};
+  const pool=['hp','sila','stamina','magia'];
+  for(let i=0;i<n;i++){
+    const s=pool[Math.floor(Math.random()*4)];
+    stats[s]=(stats[s]||0)+1+Math.floor(Math.random()*2);
   }
-  if(s==='classSelect'){
-    overlay.classList.remove('hidden');
-    hud.classList.add('hidden');dpad.classList.add('hidden');msg.classList.add('hidden');sidePanel.classList.add('hidden');
-    document.getElementById('menuButtons').classList.add('hidden');
-    document.getElementById('classButtons').classList.remove('hidden');
-    document.getElementById('overlayText').innerHTML='Wybierz klasę postaci.<br>Ruch: WASD/strzałki. Ataki: 1/2/3.';
-  }
-  if(s==='map'||s==='victory'||s==='gameOver'){
-    overlay.classList.add('hidden');
-    if(s==='map'){
-      hud.classList.remove('hidden');dpad.classList.remove('hidden');msg.classList.remove('hidden');sidePanel.classList.remove('hidden');
-    } else {
-      hud.classList.add('hidden');dpad.classList.add('hidden');msg.classList.add('hidden');sidePanel.classList.add('hidden');
-    }
+  return stats;
+}
+
+function makeStartingEquip(cls){
+  if(cls==='warrior'){
+    return {
+      weapon:{kind:'weapon',slot:'weapon',weapon:'miecz',name:'Miecz',icon:'🗡️',rarity:'common',stats:rollStats(1)},
+      armor:{kind:'item',slot:'armor',name:'Skórzana zbroja',icon:'🛡️',rarity:'common',stats:rollStats(1)},
+      helm:null,ring:null
+    };
+  } else {
+    return {
+      weapon:{kind:'weapon',slot:'weapon',weapon:'kostur',name:'Kostur maga',icon:'🪄',rarity:'common',stats:rollStats(1)},
+      armor:{kind:'item',slot:'armor',name:'Szata maga',icon:'🛡️',rarity:'common',stats:rollStats(1)},
+      helm:null,ring:null
+    };
   }
 }
 
 function newGame(cls){
+  const equip=makeStartingEquip(cls);
   if(cls==='warrior'){
-    player={cls:'warrior',x:2,y:4,hp:120,maxHp:120,sta:100,maxSta:100,mp:20,maxMp:20,sila:12,magia:3,
-      equip:{weapon:'miecz',armor:null,helm:null,ring:null}};
+    player={cls:'warrior',x:2,y:4,
+      base:{hp:120,sta:100,mp:20,sila:12,magia:3},
+      hp:120,sta:100,mp:20,equip};
   } else {
-    player={cls:'mage',x:2,y:4,hp:80,maxHp:80,sta:100,maxSta:100,mp:60,maxMp:60,sila:4,magia:14,
-      equip:{weapon:'kostur',armor:null,helm:null,ring:null}};
+    player={cls:'mage',x:2,y:4,
+      base:{hp:80,sta:100,mp:60,sila:4,magia:14},
+      hp:80,sta:100,mp:60,equip};
   }
   inventory=[];
   currentLevel=1;
   loadLevel(1);
   showScreen('map');
-  log('Poziom 1: '+levels[1].name+'.<br>W jednej turze: ruch LUB atak LUB czekanie.<br><b>1</b> lekki, <b>2</b> silny, <b>3</b> specjalny, <b>E</b> koniec tury.');
+  log('Poziom 1: '+levels[1].name+'.<br>W turze: ruch, potem atak/czekanie/kolejny ruch.<br><b>1</b> lekki, <b>2</b> silny, <b>3</b> specjalny, <b>E</b> koniec tury.');
   saveGame();
 }
+
+function effStat(k){
+  let v=player.base[k]||0;
+  Object.values(player.equip).forEach(it=>{if(it&&it.stats&&it.stats[k])v+=it.stats[k];});
+  return v;
+}
+function bonusStat(k){
+  let v=0;
+  Object.values(player.equip).forEach(it=>{if(it&&it.stats&&it.stats[k])v+=it.stats[k];});
+  return v;
+}
+function maxHp(){return effStat('hp');}
+function maxSta(){return effStat('stamina');}
+function maxMp(){return effStat('mp');}
 
 function isWall(x,y){return walls.some(w=>w.x===x&&w.y===y);}
 function isEnemyAt(x,y,exclude){return enemies.some(e=>e!==exclude&&e.x===x&&e.y===y);}
@@ -194,7 +219,6 @@ function loadLevel(n){
   enemies=[];drops=[];walls=[];exitPos=null;targeting=null;movedThisTurn=false;
   player.x=2;player.y=4;
   const cfg=levels[n];
-  // ściany – losowe, nie na starcie gracza i nie na wyjściu
   let tries=0;
   while(walls.length<cfg.walls&&tries<200){
     tries++;
@@ -222,6 +246,9 @@ function loadLevel(n){
       drops.push({x,y,kind:'item',...generateItem(rollRarity())});
     }
   }
+  player.hp=Math.min(player.hp,maxHp());
+  player.sta=Math.min(player.sta,maxSta());
+  player.mp=Math.min(player.mp,maxMp());
   turn='player';busy=false;
   render();
 }
@@ -238,7 +265,6 @@ function loadGame(){
     const d=JSON.parse(raw);
     player=d.player;inventory=d.inventory;currentLevel=d.currentLevel;
     enemies=d.enemies;drops=d.drops;walls=d.walls||[];exitPos=d.exitPos;
-    if(!player.equip)player.equip={weapon:player.weapon||'miecz',armor:null,helm:null,ring:null};
     targeting=null;movedThisTurn=false;
     showScreen('map');
     render();
@@ -276,6 +302,7 @@ function drawPlayer(){
   rect(x+9,y+6,14,14,'#e8d44d');
   const bodyColor=player.equip.armor?'#8b5a2b':(player.cls==='warrior'?'#4da3e8':'#9c27b0');
   rect(x+7,y+20,18,9,bodyColor);
+  rect(x+9,y+29,12,3,'#37474f'); // spodnie
   if(player.equip.helm)rect(x+8,y+4,16,5,'#9e9e9e');
   if(player.equip.ring)rect(x+22,y+26,4,4,'#ffb300');
   const w=player.equip.weapon;
@@ -312,25 +339,69 @@ function render(){
   updateHUD();
 }
 
+function drawPreview(){
+  if(!player)return;
+  preview.innerHTML='';
+  const eq=player.equip;
+  const R=(x,y,w,h,c)=>{const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('fill',c);preview.appendChild(r);};
+  // głowa
+  R(5,2,6,5,'#e8d44d');
+  if(eq.helm)R(4,1,8,3,'#9e9e9e');
+  // tors – zbroja
+  R(4,8,8,4, eq.armor?'#8b5a2b':(player.cls==='warrior'?'#4da3e8':'#9c27b0'));
+  // spodnie
+  R(5,12,2,3,'#37474f');
+  R(9,12,2,3,'#37474f');
+  // pas z 3 potkami
+  R(4,11,8,1,'#8b5a2b');
+  // ręka lewa – broń
+  const w=eq.weapon;
+  if(w==='miecz')R(12,8,1,5,'#c7f0d8');
+  if(w==='wlocznia'){R(12,5,1,8,'#c7f0d8');R(11,4,3,2,'#e45c10');}
+  if(w==='bulawa'){R(12,8,1,5,'#8b5a2b');R(11,6,3,3,'#9e9e9e');}
+  if(w==='kostur'){R(12,6,1,7,'#8b5a2b');R(11,4,3,3,'#4da3e8');}
+  // ręka prawa
+  R(3,8,1,4,'#e8d44d');
+  // pierścień
+  if(eq.ring)R(3,12,1,1,'#ffb300');
+}
+
 function updateHUD(){
   if(!player)return;
-  document.querySelector('#hpBar i').style.width=(player.hp/player.maxHp*100)+'%';
-  document.querySelector('#stBar i').style.width=(player.sta/player.maxSta*100)+'%';
-  document.querySelector('#mpBar i').style.width=(player.mp/player.maxMp*100)+'%';
+  document.querySelector('#hpBar i').style.width=(player.hp/maxHp()*100)+'%';
+  document.querySelector('#stBar i').style.width=(player.sta/maxSta()*100)+'%';
+  document.querySelector('#mpBar i').style.width=(player.mp/maxMp()*100)+'%';
   document.getElementById('levelLabel').textContent='Poziom '+currentLevel;
   document.getElementById('turnLabel').textContent=turn==='player'?'Twoja tura':'Tura wroga';
-  const eq=player.equip;
+
+  const statLine=(label,key)=>{
+    const base=player.base[key]||0;
+    const bonus=bonusStat(key);
+    const total=base+bonus;
+    if(bonus>0){
+      return label+': <span class="base">'+total+'</span> <span class="bonus">('+base+' +'+bonus+')</span><br>';
+    }
+    return label+': <span class="base">'+total+'</span><br>';
+  };
   document.getElementById('stats').innerHTML=
     'Klasa: '+(player.cls==='warrior'?'Wojownik':'Mag')+'<br>'+
-    'Broń: '+weapons[eq.weapon].name+'<br>'+
-    'Zbroja: '+(eq.armor?eq.armor.name:'-')+'<br>'+
-    'Hełm: '+(eq.helm?eq.helm.name:'-')+'<br>'+
-    'Pierścień: '+(eq.ring?eq.ring.name:'-')+'<br>'+
-    'HP: '+player.hp+'/'+player.maxHp+'<br>'+
-    'Stamina: '+player.sta+'/'+player.maxSta+'<br>'+
-    'Moc: '+player.magia+' | Siła: '+player.sila;
-  const w=weapons[eq.weapon];
-  document.getElementById('btnStrong').innerHTML='2. Silny: '+w.strong.name+' <small>'+costText(w.strong.cost)+'</small>';
+    statLine('HP','hp')+
+    statLine('Stamina','stamina')+
+    statLine('Moc','magia')+
+    statLine('Siła','sila')+
+    '<span style="color:#8bac0f">Regen: +15 STA, +5 MP / turę</span>';
+
+  const w=weapons[player.equip.weapon];
+  const lightMin=player.cls==='warrior'?effStat('sila'):Math.ceil(effStat('magia')/2);
+  const lightMax=Math.ceil(lightMin*1.5);
+  const strongMin=(player.cls==='warrior'?effStat('sila'):effStat('magia'))*2;
+  const strongMax=Math.ceil(strongMin*1.5);
+  const specMin=effStat('magia')*2;
+  const specMax=Math.ceil(specMin*1.5);
+  document.getElementById('btnLight').innerHTML='1. Lekki atak <small>10 STA | obrażenia '+lightMin+'–'+lightMax+'</small>';
+  document.getElementById('btnStrong').innerHTML='2. Silny: '+w.strong.name+' <small>'+costText(w.strong.cost)+' | '+strongMin+'–'+strongMax+'</small>';
+  document.getElementById('btnSpecial').innerHTML='3. Specjalny: Pocisk mocy <small>15 MP | '+specMin+'–'+specMax+'</small>';
+  drawPreview();
   renderEQ();
 }
 
@@ -385,9 +456,9 @@ function openItemMenu(i){
 
 function usePotion(i){
   const it=inventory[i];
-  if(it.potion==='hp'){player.hp=Math.min(player.maxHp,player.hp+30);log('Wypito miksturę zdrowia: +30 HP');}
-  if(it.potion==='sta'){player.sta=Math.min(player.maxSta,player.sta+40);log('Wypito miksturę staminy: +40 STA');}
-  if(it.potion==='mp'){player.mp=Math.min(player.maxMp,player.mp+25);log('Wypito miksturę many: +25 MP');}
+  if(it.potion==='hp'){player.hp=Math.min(maxHp(),player.hp+30);log('Wypito miksturę zdrowia: +30 HP');}
+  if(it.potion==='sta'){player.sta=Math.min(maxSta(),player.sta+40);log('Wypito miksturę staminy: +40 STA');}
+  if(it.potion==='mp'){player.mp=Math.min(maxMp(),player.mp+25);log('Wypito miksturę many: +25 MP');}
   inventory.splice(i,1);
   saveGame();render();
 }
@@ -399,6 +470,9 @@ function equipItem(i){
   player.equip[slot]=it;
   inventory.splice(i,1);
   if(old)inventory.push(old);
+  player.hp=Math.min(player.hp,maxHp());
+  player.sta=Math.min(player.sta,maxSta());
+  player.mp=Math.min(player.mp,maxMp());
   log('Wyposażono: '+it.name);
   saveGame();render();
 }
@@ -411,6 +485,10 @@ function destroyItem(i){
 
 function canAct(){return player&&screen==='map'&&turn==='player'&&!busy;}
 
+function rollDamage(base){
+  return base+Math.floor(Math.random()*Math.ceil(base*0.5));
+}
+
 function move(dx,dy){
   if(!canAct())return;
   lastDir={x:dx,y:dy};
@@ -419,16 +497,22 @@ function move(dx,dy){
   if(nx<=0||nx>=COLS-1||ny<=0||ny>=ROWS-1)return;
   if(isWall(nx,ny)){log('Tam jest ściana.');return;}
   if(isEnemyAt(nx,ny)){log('Pole zajęte przez wroga.');return;}
-  player.x=nx;player.y=ny;
-  checkPickup();
-  checkExit();
-  if(screen==='map'){
-    if(movedThisTurn){
-      saveGame();endTurn();
-    } else {
-      movedThisTurn=true;
+  if(movedThisTurn){
+    // najpierw wrogowie, potem gracz, potem nowa tura
+    enemyActions();
+    if(player.hp<=0)return;
+    player.x=nx;player.y=ny;
+    checkPickup();
+    checkExit();
+    if(screen==='map'){startNewPlayerTurn();}
+  } else {
+    player.x=nx;player.y=ny;
+    movedThisTurn=true;
+    checkPickup();
+    checkExit();
+    if(screen==='map'){
       saveGame();render();
-      log('Ruch wykonany. Możesz jeszcze: atak (1/2/3), czekanie (E) lub kolejny ruch – to zakończy turę.');
+      log('Ruch wykonany. Teraz: atak (1/2/3), czekanie (E) lub kolejny ruch – wrogowie ruszą się pierwszy.');
     }
   }
 }
@@ -438,8 +522,8 @@ function checkPickup(){
     if(d.x===player.x&&d.y===player.y){
       if(d.kind==='weapon'){
         const old=player.equip.weapon;
-        player.equip.weapon=d.weapon;
-        if(old)inventory.push({kind:'weapon',weapon:old,icon:weapons[old].icon,rarity:'common',name:weapons[old].name,stats:{},slot:'weapon'});
+        player.equip.weapon={kind:'weapon',slot:'weapon',weapon:d.weapon,icon:d.icon,rarity:'common',name:weapons[d.weapon].name,stats:rollStats(1)};
+        if(old)inventory.push(old);
         log('Podniesiono i wyposażono: '+weapons[d.weapon].name);
       } else {
         if(inventory.length<8){inventory.push(d);log('Zdobyto: '+d.name);}
@@ -528,21 +612,23 @@ function executeAttack(type,e){
   const w=weapons[player.equip.weapon];
   if(type==='light'){
     if(!payCost({sta:10})){log('Za mało staminy! (10 STA)');return;}
-    e.hp-=player.cls==='warrior'?player.sila:Math.ceil(player.magia/2);
+    const base=player.cls==='warrior'?effStat('sila'):Math.ceil(effStat('magia')/2);
+    e.hp-=rollDamage(base);
     log('Lekki atak (1): trafiono wroga. Koszt: 10 STA.');
   }
   if(type==='strong'){
     if(!payCost(w.strong.cost)){log('Brak zasobów: '+costText(w.strong.cost));return;}
-    e.hp-=player.cls==='warrior'?player.sila*2:player.magia*2;
+    const base=(player.cls==='warrior'?effStat('sila'):effStat('magia'))*2;
+    e.hp-=rollDamage(base);
     log(w.strong.name+' (2): trafiono wroga. Koszt: '+costText(w.strong.cost)+'.');
   }
   if(type==='special'){
     if(!payCost({mp:15})){log('Za mało MP! (15 MP)');return;}
-    e.hp-=player.magia*2;
-    log('Pocisk mocy (3): '+player.magia*2+' obrażeń. Koszt: 15 MP.');
+    e.hp-=rollDamage(effStat('magia')*2);
+    log('Pocisk mocy (3): trafiono wroga. Koszt: 15 MP.');
   }
   cleanupEnemies();
-  endTurn();
+  finishTurn();
 }
 
 svg.addEventListener('click',ev=>{
@@ -561,7 +647,7 @@ function cleanupEnemies(){
       const r=Math.random();
       if(r<0.3){
         const wp=['miecz','wlocznia','bulawa','kostur'][Math.floor(Math.random()*4)];
-        drops.push({x:e.x,y:e.y,kind:'weapon',weapon:wp,icon:weapons[wp].icon,rarity:'common',name:weapons[wp].name,stats:{},slot:'weapon'});
+        drops.push({x:e.x,y:e.y,kind:'weapon',weapon:wp,icon:weapons[wp].icon,rarity:'common',name:weapons[wp].name,stats:rollStats(1),slot:'weapon'});
       } else if(r<0.6){
         const kinds=['hp','sta','mp'];
         const k=kinds[Math.floor(Math.random()*3)];
@@ -603,16 +689,7 @@ function generateItem(rarity){
   return {name:c.n,icon:c.i,rarity,stats,slot:c.slot};
 }
 
-function endTurn(){
-  targeting=null;movedThisTurn=false;
-  render();
-  saveGame();
-  if(!enemies.length){log('Poziom czysty. Wejdź na wyjście ▶');turn='player';busy=false;return;}
-  turn='enemy';busy=true;
-  setTimeout(enemyTurn,600);
-}
-
-function enemyTurn(){
+function enemyActions(){
   enemies.forEach(e=>{
     const dx=Math.sign(player.x-e.x),dy=Math.sign(player.y-e.y);
     if(Math.abs(player.x-e.x)<=1&&Math.abs(player.y-e.y)<=1){
@@ -632,11 +709,26 @@ function enemyTurn(){
     document.getElementById('menuButtons').classList.remove('hidden');
     document.getElementById('classButtons').classList.add('hidden');
     localStorage.removeItem(SAVE_KEY);
-    return;
   }
+}
+
+function finishTurn(){
+  movedThisTurn=false;
+  render();
+  saveGame();
+  if(!enemies.length){log('Poziom czysty. Wejdź na wyjście ▶');turn='player';busy=false;return;}
+  turn='enemy';busy=true;
+  setTimeout(()=>{
+    enemyActions();
+    if(player.hp<=0)return;
+    startNewPlayerTurn();
+  },500);
+}
+
+function startNewPlayerTurn(){
   turn='player';busy=false;movedThisTurn=false;
-  player.sta=Math.min(player.maxSta,player.sta+15);
-  player.mp=Math.min(player.maxMp,player.mp+5);
+  player.sta=Math.min(maxSta(),player.sta+15);
+  player.mp=Math.min(maxMp(),player.mp+5);
   render();
   log('Twoja tura. Stamina +15, MP +5.<br>1 – lekki, 2 – silny, 3 – specjalny, E – koniec tury.');
 }
@@ -653,7 +745,7 @@ document.querySelectorAll('.dbtn').forEach(b=>{
 document.getElementById('btnLight').onclick=()=>startTargeting('light');
 document.getElementById('btnStrong').onclick=()=>startTargeting('strong');
 document.getElementById('btnSpecial').onclick=()=>startTargeting('special');
-document.getElementById('btnEnd').onclick=()=>{if(canAct()){log('Koniec tury.');endTurn();}};
+document.getElementById('btnEnd').onclick=()=>{if(canAct()){log('Koniec tury.');finishTurn();}};
 document.getElementById('btnMenu').onclick=()=>showScreen('menu');
 document.getElementById('btnNew').onclick=()=>showScreen('classSelect');
 document.getElementById('btnContinue').onclick=()=>{if(!loadGame())log('Brak zapisu.');};
@@ -669,7 +761,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='3')startTargeting('special');
   if(e.key==='Tab'){e.preventDefault();if(targeting){targetIdx=(targetIdx+1)%targeting.targets.length;render();log('Cel: '+(targetIdx+1)+'/'+targeting.targets.length);}}
   if(e.key==='Enter'){if(targeting)confirmTarget();}
-  if(e.key==='e'||e.key==='E'){if(canAct()){log('Koniec tury.');endTurn();}}
+  if(e.key==='e'||e.key==='E'){if(canAct()){log('Koniec tury.');finishTurn();}}
   if(e.key==='Escape')showScreen('menu');
 });
 
