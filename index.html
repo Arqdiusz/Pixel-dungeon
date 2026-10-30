@@ -70,7 +70,7 @@
       <div id="msg" class="hidden"></div>
       <div id="overlay">
         <h1>PIXEL DUNGEON TACTICS</h1>
-        <p id="overlayText">Turowa gra pixelowa w stylu Game Boya.<br>Ruch: WASD/strzałki. Ataki: 1/2/3, Tab – zmiana celu, Enter – potwierdź.</p>
+        <p id="overlayText">Turowa gra pixelowa w stylu Game Boya.<br>Ruch: WASD/strzałki. Ataki: 1/2/3, Tab – cel, Enter – potwierdź, E – koniec tury.</p>
         <div id="menuButtons">
           <button class="mbtn" id="btnNew">NOWA GRA</button>
           <button class="mbtn" id="btnContinue">KONTYNUUJ</button>
@@ -86,14 +86,14 @@
   <div id="sidePanel" class="hidden">
     <div class="panelTitle">BOHATER</div>
     <div id="stats">-</div>
-    <div class="panelTitle">ATAKI (1/2/3, Tab – cel, Enter – zatwierdź)</div>
+    <div class="panelTitle">ATAKI (1/2/3)</div>
     <div id="attackBtns">
       <button class="atk" id="btnLight">1. Lekki atak <small>10 STA</small></button>
       <button class="atk" id="btnStrong">2. Silny: - <small>-</small></button>
       <button class="atk" id="btnSpecial">3. Specjalny: Pocisk mocy <small>15 MP</small></button>
       <button class="atk" id="btnEnd">Koniec tury (E)</button>
     </div>
-    <div class="panelTitle">EKWIPUNEK (kliknij przedmiot)</div>
+    <div class="panelTitle">EKWIPUNEK</div>
     <div id="eq"></div>
     <button class="atk" id="btnMenu" style="margin-top:auto">MENU (Esc)</button>
   </div>
@@ -112,15 +112,16 @@ const T=32, COLS=20, ROWS=9;
 const SAVE_KEY='pixelDungeonSave';
 
 let screen='menu';
-let player=null, enemies=[], drops=[], inventory=[];
+let player=null, enemies=[], drops=[], walls=[], inventory=[];
 let currentLevel=1, turn='player', busy=false, exitPos=null;
 let lastDir={x:1,y:0};
 let targeting=null, targetIdx=0;
+let movedThisTurn=false;
 
 const levels={
-  1:{enemies:3,items:3,name:'Komnaty wejściowe'},
-  2:{enemies:4,items:4,name:'Korytarze mroku'},
-  3:{enemies:5,items:4,name:'Sala bossa'}
+  1:{enemies:3,items:3,walls:10,name:'Komnaty wejściowe'},
+  2:{enemies:4,items:4,walls:16,name:'Korytarze mroku'},
+  3:{enemies:5,items:4,walls:22,name:'Sala bossa'}
 };
 
 const rarityColors={common:'#9e9e9e',uncommon:'#4caf50',rare:'#2196f3',epic:'#9c27b0',legendary:'#ffb300'};
@@ -180,26 +181,45 @@ function newGame(cls){
   currentLevel=1;
   loadLevel(1);
   showScreen('map');
-  log('Poziom 1: '+levels[1].name+'.<br>Ruch nie kończy tury – możesz się ruszać i potem atakować.<br><b>1</b> lekki, <b>2</b> silny, <b>3</b> specjalny, <b>E</b> koniec tury.');
+  log('Poziom 1: '+levels[1].name+'.<br>W jednej turze: ruch LUB atak LUB czekanie.<br><b>1</b> lekki, <b>2</b> silny, <b>3</b> specjalny, <b>E</b> koniec tury.');
   saveGame();
 }
 
+function isWall(x,y){return walls.some(w=>w.x===x&&w.y===y);}
+function isEnemyAt(x,y,exclude){return enemies.some(e=>e!==exclude&&e.x===x&&e.y===y);}
+function isPlayerAt(x,y){return player&&player.x===x&&player.y===y;}
+
 function loadLevel(n){
   currentLevel=n;
-  enemies=[];drops=[];exitPos=null;targeting=null;
+  enemies=[];drops=[];walls=[];exitPos=null;targeting=null;movedThisTurn=false;
   player.x=2;player.y=4;
   const cfg=levels[n];
+  // ściany – losowe, nie na starcie gracza i nie na wyjściu
+  let tries=0;
+  while(walls.length<cfg.walls&&tries<200){
+    tries++;
+    const x=3+Math.floor(Math.random()*(COLS-5));
+    const y=1+Math.floor(Math.random()*(ROWS-2));
+    if((x===2&&y===4)||isWall(x,y))continue;
+    walls.push({x,y});
+  }
   for(let i=0;i<cfg.enemies;i++){
-    enemies.push({x:10+Math.floor(Math.random()*8),y:1+Math.floor(Math.random()*(ROWS-2)),hp:30+n*5,maxHp:30+n*5,dir:1});
+    let x,y,t=0;
+    do{x=10+Math.floor(Math.random()*8);y=1+Math.floor(Math.random()*(ROWS-2));t++;}
+    while((isWall(x,y)||isEnemyAt(x,y)||isPlayerAt(x,y))&&t<100);
+    enemies.push({x,y,hp:30+n*5,maxHp:30+n*5,dir:1});
   }
   for(let i=0;i<cfg.items;i++){
+    let x,y,t=0;
+    do{x=4+Math.floor(Math.random()*14);y=1+Math.floor(Math.random()*(ROWS-2));t++;}
+    while((isWall(x,y)||isEnemyAt(x,y))&&t<100);
     const r=Math.random();
     if(r<0.5){
       const kinds=['hp','sta','mp'];
       const k=kinds[Math.floor(Math.random()*3)];
-      drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'potion',potion:k,icon:potions[k].icon,rarity:'common',name:potions[k].name,stats:{}});
+      drops.push({x,y,kind:'potion',potion:k,icon:potions[k].icon,rarity:'common',name:potions[k].name,stats:{}});
     } else {
-      drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'item',...generateItem(rollRarity())});
+      drops.push({x,y,kind:'item',...generateItem(rollRarity())});
     }
   }
   turn='player';busy=false;
@@ -208,7 +228,7 @@ function loadLevel(n){
 
 function saveGame(){
   if(!player)return;
-  localStorage.setItem(SAVE_KEY,JSON.stringify({player,inventory,currentLevel,enemies,drops,exitPos}));
+  localStorage.setItem(SAVE_KEY,JSON.stringify({player,inventory,currentLevel,enemies,drops,walls,exitPos}));
 }
 
 function loadGame(){
@@ -217,8 +237,9 @@ function loadGame(){
   try{
     const d=JSON.parse(raw);
     player=d.player;inventory=d.inventory;currentLevel=d.currentLevel;
-    enemies=d.enemies;drops=d.drops;exitPos=d.exitPos;
+    enemies=d.enemies;drops=d.drops;walls=d.walls||[];exitPos=d.exitPos;
     if(!player.equip)player.equip={weapon:player.weapon||'miecz',armor:null,helm:null,ring:null};
+    targeting=null;movedThisTurn=false;
     showScreen('map');
     render();
     log('Wczytano zapis. Poziom '+currentLevel+': '+levels[currentLevel].name);
@@ -233,16 +254,16 @@ function drawMap(){
   const off=44;
   for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)
     rect(x*T,off+y*T,T,T,((x+y)%2)?'#1b4a1b':'#0f380f');
+  walls.forEach(w=>rect(w.x*T,off+w.y*T,T,T,'#555'));
   for(let x=0;x<COLS;x++){rect(x*T,off,T,T,'#306230');rect(x*T,off+(ROWS-1)*T,T,T,'#306230');}
   for(let y=0;y<ROWS;y++){rect(0,off+y*T,T,T,'#306230');rect((COLS-1)*T,off+y*T,T,T,'#306230');}
   if(exitPos){
     rect(exitPos.x*T+4,off+exitPos.y*T+4,T-8,T-8,'#e8d44d');
     text(exitPos.x*T+8,off+exitPos.y*T+22,'▶','#0f380f',14);
   }
-  // podświetlenie celów
   if(targeting){
     targeting.targets.forEach((e,i)=>{
-      const x=e.x*T,y=44+e.y*T;
+      const x=e.x*T,y=off+e.y*T;
       rect(x+2,y+2,T-4,T-4, i===targetIdx?'#e8d44d':'#4da3e8');
       text(x+6,y+20,(i+1),'#0f380f',14);
     });
@@ -253,11 +274,10 @@ function drawPlayer(){
   if(!player)return;
   const x=player.x*T,y=44+player.y*T;
   rect(x+9,y+6,14,14,'#e8d44d');
-  // zbroja zmienia kolor torsu
   const bodyColor=player.equip.armor?'#8b5a2b':(player.cls==='warrior'?'#4da3e8':'#9c27b0');
   rect(x+7,y+20,18,9,bodyColor);
   if(player.equip.helm)rect(x+8,y+4,16,5,'#9e9e9e');
-  if(player.equip.ring){rect(x+22,y+26,4,4,'#ffb300');}
+  if(player.equip.ring)rect(x+22,y+26,4,4,'#ffb300');
   const w=player.equip.weapon;
   if(w==='miecz')rect(x+25,y+16,3,12,'#c7f0d8');
   if(w==='wlocznia'){rect(x+25,y+8,3,20,'#c7f0d8');rect(x+24,y+6,5,5,'#e45c10');}
@@ -300,13 +320,12 @@ function updateHUD(){
   document.getElementById('levelLabel').textContent='Poziom '+currentLevel;
   document.getElementById('turnLabel').textContent=turn==='player'?'Twoja tura':'Tura wroga';
   const eq=player.equip;
-  const eqNames={weapon:weapons[eq.weapon].name,armor:eq.armor?eq.armor.name:'-',helm:eq.helm?eq.helm.name:'-',ring:eq.ring?eq.ring.name:'-'};
   document.getElementById('stats').innerHTML=
     'Klasa: '+(player.cls==='warrior'?'Wojownik':'Mag')+'<br>'+
-    'Broń: '+eqNames.weapon+'<br>'+
-    'Zbroja: '+eqNames.armor+'<br>'+
-    'Hełm: '+eqNames.helm+'<br>'+
-    'Pierścień: '+eqNames.ring+'<br>'+
+    'Broń: '+weapons[eq.weapon].name+'<br>'+
+    'Zbroja: '+(eq.armor?eq.armor.name:'-')+'<br>'+
+    'Hełm: '+(eq.helm?eq.helm.name:'-')+'<br>'+
+    'Pierścień: '+(eq.ring?eq.ring.name:'-')+'<br>'+
     'HP: '+player.hp+'/'+player.maxHp+'<br>'+
     'Stamina: '+player.sta+'/'+player.maxSta+'<br>'+
     'Moc: '+player.magia+' | Siła: '+player.sila;
@@ -397,11 +416,20 @@ function move(dx,dy){
   lastDir={x:dx,y:dy};
   targeting=null;
   const nx=player.x+dx,ny=player.y+dy;
-  if(nx>0&&nx<COLS-1&&ny>0&&ny<ROWS-1){
-    player.x=nx;player.y=ny;
-    checkPickup();
-    checkExit();
-    if(screen==='map'){saveGame();render();log('Ruch wykonany. Możesz jeszcze atakować (1/2/3) lub zakończyć turę (E).');}
+  if(nx<=0||nx>=COLS-1||ny<=0||ny>=ROWS-1)return;
+  if(isWall(nx,ny)){log('Tam jest ściana.');return;}
+  if(isEnemyAt(nx,ny)){log('Pole zajęte przez wroga.');return;}
+  player.x=nx;player.y=ny;
+  checkPickup();
+  checkExit();
+  if(screen==='map'){
+    if(movedThisTurn){
+      saveGame();endTurn();
+    } else {
+      movedThisTurn=true;
+      saveGame();render();
+      log('Ruch wykonany. Możesz jeszcze: atak (1/2/3), czekanie (E) lub kolejny ruch – to zakończy turę.');
+    }
   }
 }
 
@@ -485,14 +513,15 @@ function startTargeting(type){
   targeting={type,targets};
   targetIdx=0;
   render();
-  log('Wybierz cel: kliknij wroga na planszy lub <b>Tab</b> zmienia cel, <b>Enter</b> potwierdza.');
+  log('Wybierz cel: kliknij wroga lub <b>Tab</b> zmienia cel, <b>Enter</b> potwierdza.');
 }
 
 function confirmTarget(){
   if(!targeting)return;
   const e=targeting.targets[targetIdx];
-  executeAttack(targeting.type,e);
+  const type=targeting.type;
   targeting=null;
+  executeAttack(type,e);
 }
 
 function executeAttack(type,e){
@@ -575,7 +604,7 @@ function generateItem(rarity){
 }
 
 function endTurn(){
-  targeting=null;
+  targeting=null;movedThisTurn=false;
   render();
   saveGame();
   if(!enemies.length){log('Poziom czysty. Wejdź na wyjście ▶');turn='player';busy=false;return;}
@@ -589,7 +618,11 @@ function enemyTurn(){
     if(Math.abs(player.x-e.x)<=1&&Math.abs(player.y-e.y)<=1){
       player.hp-=8;log('Wróg atakuje! -8 HP');
     } else {
-      if(Math.abs(player.x-e.x)>Math.abs(player.y-e.y))e.x+=dx;else e.y+=dy;
+      let nx=e.x,ny=e.y;
+      if(Math.abs(player.x-e.x)>Math.abs(player.y-e.y))nx+=dx;else ny+=dy;
+      if(!isWall(nx,ny)&&!isEnemyAt(nx,ny,e)&&!isPlayerAt(nx,ny)){
+        e.x=nx;e.y=ny;
+      }
     }
   });
   if(player.hp<=0){
@@ -601,7 +634,7 @@ function enemyTurn(){
     localStorage.removeItem(SAVE_KEY);
     return;
   }
-  turn='player';busy=false;
+  turn='player';busy=false;movedThisTurn=false;
   player.sta=Math.min(player.maxSta,player.sta+15);
   player.mp=Math.min(player.maxMp,player.mp+5);
   render();
@@ -645,4 +678,3 @@ showScreen('menu');
 
 </body>
 </html>
- 
