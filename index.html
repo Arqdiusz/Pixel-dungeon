@@ -4,79 +4,94 @@
 <meta charset="UTF-8">
 <title>Pixel Dungeon Tactics</title>
 <style>
-  * { box-sizing:border-box; }
-  body { margin:0; background:#0b0b0b; color:#8bac0f; font-family:"Courier New",monospace; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-  #screen { flex:1; display:flex; align-items:center; justify-content:center; background:#000; }
-  #stage { position:relative; width:min(96vw, calc(96vh * 16 / 9)); aspect-ratio:16/9; background:#0f380f; border:6px solid #306230; image-rendering:pixelated; }
-  svg { width:100%; height:100%; display:block; image-rendering:pixelated; }
-  #hud { position:absolute; top:0; left:0; right:0; height:12%; background:#306230; border-bottom:3px solid #8bac0f; display:flex; align-items:center; gap:8px; padding:0 8px; font-size:clamp(9px,1.5vw,13px); color:#c7f0d8; }
-  .mini { width:16%; height:38%; background:#0f380f; border:2px solid #8bac0f; position:relative; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; }
+  body { background:#0b0b0b; color:#c7f0d8; font-family:"Courier New",monospace; display:flex; flex-direction:column; overflow:hidden; }
+  #app { flex:1; display:flex; flex-direction:row; min-height:0; }
+  #gameArea { flex:2; display:flex; flex-direction:column; min-width:0; }
+  #stage { position:relative; flex:1; background:#0f380f; border-right:4px solid #306230; min-height:0; }
+  svg#svg { width:100%; height:100%; display:block; }
+  #hud { position:absolute; top:0; left:0; right:0; height:12%; background:#306230; border-bottom:3px solid #8bac0f; display:flex; align-items:center; gap:6px; padding:0 6px; font-size:clamp(8px,1.2vw,12px); }
+  .mini { flex:1; height:40%; background:#0f380f; border:2px solid #8bac0f; position:relative; min-width:30px; }
   .mini i { position:absolute; inset:0; background:#e45c10; }
   #stBar i { background:#e8d44d; }
   #mpBar i { background:#4da3e8; }
-  #controls { height:26%; background:#0f380f; border-top:4px solid #306230; display:flex; align-items:center; justify-content:space-between; padding:2% 4%; }
-  #dpad { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); width:24%; aspect-ratio:1; }
-  .dbtn { background:#306230; border:2px solid #8bac0f; color:#c7f0d8; display:flex; align-items:center; justify-content:center; font-size:clamp(10px,2vw,18px); user-select:none; cursor:pointer; }
+  #dpad { position:absolute; bottom:4%; left:4%; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); width:18%; aspect-ratio:1; opacity:.95; }
+  .dbtn { background:#306230; border:2px solid #8bac0f; color:#c7f0d8; display:flex; align-items:center; justify-content:center; font-size:clamp(12px,2vw,20px); user-select:none; cursor:pointer; }
   .dbtn:active { background:#8bac0f; color:#0f380f; }
-  #actions { display:flex; gap:3%; width:58%; }
-  .abtn { flex:1; background:#306230; border:3px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(9px,1.6vw,14px); padding:6% 2%; cursor:pointer; }
-  .abtn:active { background:#8bac0f; color:#0f380f; }
-  #overlay { position:absolute; inset:0; background:#0f380f; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4%; z-index:10; text-align:center; padding:4%; }
-  #overlay h1 { font-size:clamp(16px,4vw,32px); color:#c7f0d8; margin:0; }
-  #overlay p { font-size:clamp(9px,1.6vw,14px); color:#8bac0f; margin:0; }
-  .mbtn { background:#306230; border:3px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(10px,2vw,16px); padding:3% 8%; cursor:pointer; min-width:40%; }
-  .mbtn:active { background:#8bac0f; color:#0f380f; }
-  #menu { position:absolute; left:4%; bottom:28%; width:46%; background:#0f380f; border:3px solid #8bac0f; padding:8px; font-size:clamp(9px,1.5vw,13px); color:#c7f0d8; display:none; z-index:5; }
+  #msg { position:absolute; left:26%; right:4%; bottom:4%; background:#0f380f; border:3px solid #8bac0f; padding:6px 8px; font-size:clamp(9px,1.3vw,13px); min-height:2.4em; }
+  #menu { position:absolute; left:26%; bottom:18%; width:40%; background:#0f380f; border:3px solid #8bac0f; padding:8px; font-size:clamp(9px,1.3vw,13px); display:none; z-index:5; }
   #menu div { padding:4px 6px; cursor:pointer; }
   #menu div:hover { background:#306230; }
-  #msg { position:absolute; left:4%; bottom:13%; width:70%; background:#0f380f; border:3px solid #8bac0f; padding:6px 8px; font-size:clamp(9px,1.4vw,12px); color:#c7f0d8; min-height:2.2em; }
+  #sidePanel { flex:1; background:#0f380f; border-left:4px solid #306230; display:flex; flex-direction:column; padding:2%; gap:2%; min-width:220px; overflow:auto; }
+  .panelTitle { font-size:clamp(10px,1.4vw,14px); color:#8bac0f; border-bottom:2px solid #306230; padding-bottom:2px; }
+  #stats { font-size:clamp(9px,1.2vw,12px); line-height:1.5; }
+  #attackBtns { display:flex; flex-direction:column; gap:4px; }
+  .atk { background:#306230; border:2px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(9px,1.2vw,12px); padding:6px; cursor:pointer; text-align:left; }
+  .atk:active { background:#8bac0f; color:#0f380f; }
+  #eq { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
+  .slot { aspect-ratio:1; background:#1b4a1b; border:2px solid #306230; display:flex; align-items:center; justify-content:center; font-size:clamp(12px,1.8vw,18px); cursor:pointer; }
+  #overlay { position:absolute; inset:0; background:#0f380f; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3%; z-index:20; text-align:center; padding:4%; }
+  #overlay h1 { font-size:clamp(14px,3vw,28px); }
+  #overlay p { font-size:clamp(9px,1.4vw,13px); color:#8bac0f; }
+  .mbtn { background:#306230; border:3px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(10px,1.6vw,15px); padding:8px 20px; cursor:pointer; min-width:50%; }
+  .mbtn:active { background:#8bac0f; color:#0f380f; }
   .hidden { display:none !important; }
+  @media (max-width:700px){
+    #app { flex-direction:column; }
+    #gameArea { flex:1; }
+    #sidePanel { flex:1; border-left:none; border-top:4px solid #306230; }
+    #dpad { width:26%; }
+  }
 </style>
 </head>
 <body>
 
-<div id="screen">
-  <div id="stage">
-    <svg id="svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid meet"></svg>
-
-    <div id="hud" class="hidden">
-      <div>HP</div><div class="mini" id="hpBar"><i></i></div>
-      <div>STA</div><div class="mini" id="stBar"><i></i></div>
-      <div>MP</div><div class="mini" id="mpBar"><i></i></div>
-      <div id="weaponLabel" style="margin-left:auto">-</div>
-      <div id="levelLabel" style="margin-left:8px">Poziom 1</div>
-      <div id="turnLabel" style="margin-left:8px">Twoja tura</div>
-    </div>
-
-    <div id="menu"></div>
-    <div id="msg" class="hidden"></div>
-
-    <div id="controls" class="hidden">
-      <div id="dpad">
+<div id="app">
+  <div id="gameArea">
+    <div id="stage">
+      <svg id="svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="hud" class="hidden">
+        <div>HP</div><div class="mini" id="hpBar"><i></i></div>
+        <div>STA</div><div class="mini" id="stBar"><i></i></div>
+        <div>MP</div><div class="mini" id="mpBar"><i></i></div>
+        <div id="levelLabel" style="margin-left:6px">Poziom 1</div>
+        <div id="turnLabel" style="margin-left:6px">Twoja tura</div>
+      </div>
+      <div id="dpad" class="hidden">
         <div></div><div class="dbtn" data-dir="up">▲</div><div></div>
         <div class="dbtn" data-dir="left">◀</div><div></div><div class="dbtn" data-dir="right">▶</div>
         <div></div><div class="dbtn" data-dir="down">▼</div><div></div>
       </div>
-      <div id="actions">
-        <button class="abtn" id="btnAttack">ATAK</button>
-        <button class="abtn" id="btnWait">CZEKAJ</button>
-        <button class="abtn" id="btnBag">EQ</button>
-        <button class="abtn" id="btnMenu">MENU</button>
+      <div id="menu"></div>
+      <div id="msg" class="hidden"></div>
+      <div id="overlay">
+        <h1>PIXEL DUNGEON TACTICS</h1>
+        <p id="overlayText">Turowa gra pixelowa w stylu Game Boya.</p>
+        <div id="menuButtons">
+          <button class="mbtn" id="btnNew">NOWA GRA</button>
+          <button class="mbtn" id="btnContinue">KONTYNUUJ</button>
+        </div>
+        <div id="classButtons" class="hidden">
+          <button class="mbtn" id="btnWarrior">WOJOWNIK</button>
+          <button class="mbtn" id="btnMage">MAG</button>
+        </div>
       </div>
     </div>
+  </div>
 
-    <div id="overlay">
-      <h1>PIXEL DUNGEON TACTICS</h1>
-      <p id="overlayText">Turowa gra pixelowa w stylu Game Boya.</p>
-      <div id="menuButtons">
-        <button class="mbtn" id="btnNew">NOWA GRA</button>
-        <button class="mbtn" id="btnContinue">KONTYNUUJ</button>
-      </div>
-      <div id="classButtons" class="hidden">
-        <button class="mbtn" id="btnWarrior">WOJOWNIK</button>
-        <button class="mbtn" id="btnMage">MAG</button>
-      </div>
+  <div id="sidePanel" class="hidden">
+    <div class="panelTitle">BOHATER</div>
+    <div id="stats">-</div>
+    <div class="panelTitle">ATAKI</div>
+    <div id="attackBtns">
+      <button class="atk" id="btnLight">Lekki atak (10 STA)</button>
+      <button class="atk" id="btnStrong">Silny: -</button>
+      <button class="atk" id="btnSpecial">Specjalny: Pocisk mocy (15 MP)</button>
     </div>
+    <div class="panelTitle">EKWIPUNEK</div>
+    <div id="eq"></div>
+    <button class="atk" id="btnMenu" style="margin-top:auto">MENU</button>
   </div>
 </div>
 
@@ -86,7 +101,8 @@ const msg=document.getElementById('msg');
 const menu=document.getElementById('menu');
 const overlay=document.getElementById('overlay');
 const hud=document.getElementById('hud');
-const controls=document.getElementById('controls');
+const dpad=document.getElementById('dpad');
+const sidePanel=document.getElementById('sidePanel');
 
 const T=32, COLS=20, ROWS=9;
 const SAVE_KEY='pixelDungeonSave';
@@ -121,8 +137,9 @@ function showScreen(s){
   if(s==='menu'){
     overlay.classList.remove('hidden');
     hud.classList.add('hidden');
-    controls.classList.add('hidden');
+    dpad.classList.add('hidden');
     msg.classList.add('hidden');
+    sidePanel.classList.add('hidden');
     document.getElementById('menuButtons').classList.remove('hidden');
     document.getElementById('classButtons').classList.add('hidden');
     document.getElementById('overlayText').textContent='Turowa gra pixelowa w stylu Game Boya.';
@@ -131,16 +148,26 @@ function showScreen(s){
   if(s==='classSelect'){
     overlay.classList.remove('hidden');
     hud.classList.add('hidden');
-    controls.classList.add('hidden');
+    dpad.classList.add('hidden');
     msg.classList.add('hidden');
+    sidePanel.classList.add('hidden');
     document.getElementById('menuButtons').classList.add('hidden');
     document.getElementById('classButtons').classList.remove('hidden');
     document.getElementById('overlayText').textContent='Wybierz klasę postaci.';
   }
   if(s==='map'||s==='victory'||s==='gameOver'){
     overlay.classList.add('hidden');
-    if(s==='map'){hud.classList.remove('hidden');controls.classList.remove('hidden');msg.classList.remove('hidden');}
-    else{hud.classList.add('hidden');controls.classList.add('hidden');msg.classList.add('hidden');}
+    if(s==='map'){
+      hud.classList.remove('hidden');
+      dpad.classList.remove('hidden');
+      msg.classList.remove('hidden');
+      sidePanel.classList.remove('hidden');
+    } else {
+      hud.classList.add('hidden');
+      dpad.classList.add('hidden');
+      msg.classList.add('hidden');
+      sidePanel.classList.add('hidden');
+    }
   }
 }
 
@@ -169,8 +196,7 @@ function loadLevel(n){
     enemies.push({x:10+Math.floor(Math.random()*8),y:1+Math.floor(Math.random()*(ROWS-2)),hp:30+n*5,maxHp:30+n*5,dir:1});
   }
   for(let i=0;i<cfg.items;i++){
-    const r=rollRarity();
-    drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'item',...generateItem(r)});
+    drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'item',...generateItem(rollRarity())});
   }
   turn='player';busy=false;
   render();
@@ -178,8 +204,7 @@ function loadLevel(n){
 
 function saveGame(){
   if(!player)return;
-  const data={player,inventory,currentLevel,enemies,drops,exitPos};
-  localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+  localStorage.setItem(SAVE_KEY,JSON.stringify({player,inventory,currentLevel,enemies,drops,exitPos}));
 }
 
 function loadGame(){
@@ -255,9 +280,43 @@ function updateHUD(){
   document.querySelector('#hpBar i').style.width=(player.hp/player.maxHp*100)+'%';
   document.querySelector('#stBar i').style.width=(player.sta/player.maxSta*100)+'%';
   document.querySelector('#mpBar i').style.width=(player.mp/player.maxMp*100)+'%';
-  document.getElementById('weaponLabel').textContent=weapons[player.weapon].name;
   document.getElementById('levelLabel').textContent='Poziom '+currentLevel;
   document.getElementById('turnLabel').textContent=turn==='player'?'Twoja tura':'Tura wroga';
+  document.getElementById('stats').innerHTML=
+    'Klasa: '+(player.cls==='warrior'?'Wojownik':'Mag')+'<br>'+
+    'Broń: '+weapons[player.weapon].name+'<br>'+
+    'HP: '+player.hp+'/'+player.maxHp+'<br>'+
+    'Stamina: '+player.sta+'/'+player.maxSta+'<br>'+
+    'Moc magiczna: '+player.magia+'<br>'+
+    'Siła: '+player.sila;
+  const w=weapons[player.weapon];
+  document.getElementById('btnStrong').textContent='Silny: '+w.strong.name+' ('+costText(w.strong.cost)+')';
+  renderEQ();
+}
+
+function costText(c){
+  const p=[];
+  if(c.sta)p.push(c.sta+' STA');
+  if(c.mp)p.push(c.mp+' MP');
+  if(c.hp)p.push(c.hp+' HP');
+  return p.join(', ');
+}
+
+function renderEQ(){
+  const eqDiv=document.getElementById('eq');
+  eqDiv.innerHTML='';
+  for(let i=0;i<8;i++){
+    const s=document.createElement('div');
+    s.className='slot';
+    const it=inventory[i];
+    if(it){
+      s.textContent=it.icon;
+      s.style.borderColor=rarityColors[it.rarity];
+      s.title=it.name+' ['+rarityNames[it.rarity]+'] '+Object.entries(it.stats).map(([k,v])=>k+' +'+v).join(', ');
+      s.onclick=()=>useItem(i);
+    }
+    eqDiv.appendChild(s);
+  }
 }
 
 function canAct(){return player&&screen==='map'&&turn==='player'&&!busy;}
@@ -316,35 +375,17 @@ function payCost(c){
   return true;
 }
 
-function attackMenu(){
-  if(!canAct())return;
-  menu.innerHTML='';
-  const w=weapons[player.weapon];
-  const add=(label,fn)=>{const d=document.createElement('div');d.textContent=label;d.onclick=()=>{menu.style.display='none';fn();};menu.appendChild(d);};
-  add('1. Zwykły atak (10 STA)',normalAttack);
-  add('2. Silny: '+w.strong.name+' ('+costText(w.strong.cost)+')',strongAttack);
-  add('3. Specjalny: Pocisk mocy (15 MP)',specialAttack);
-  add('Anuluj',()=>menu.style.display='none');
-  menu.style.display='block';
-}
-
-function costText(c){
-  const p=[];
-  if(c.sta)p.push(c.sta+' STA');
-  if(c.mp)p.push(c.mp+' MP');
-  if(c.hp)p.push(c.hp+' HP');
-  return p.join(', ');
-}
-
 function normalAttack(){
+  if(!canAct())return;
   if(!payCost({sta:10})){log('Za mało staminy!');return;}
   const dmg=player.cls==='warrior'?player.sila:Math.ceil(player.magia/2);
   hitAdjacent(dmg);
-  log('Zwykły atak: '+dmg+' obrażeń.');
+  log('Lekki atak: '+dmg+' obrażeń.');
   endTurn();
 }
 
 function strongAttack(){
+  if(!canAct())return;
   const w=weapons[player.weapon];
   if(!payCost(w.strong.cost)){log('Brak zasobów na: '+w.strong.name);return;}
   const type=strongByWeapon[player.weapon];
@@ -367,6 +408,7 @@ function strongAttack(){
 }
 
 function specialAttack(){
+  if(!canAct())return;
   if(!payCost({mp:15})){log('Za mało mocy magicznej!');return;}
   const dmg=player.magia*2;
   let best=null,bd=99;
@@ -430,7 +472,7 @@ function endTurn(){
   render();
   saveGame();
   if(!enemies.length){log('Poziom czysty. Wejdź na wyjście ▶');turn='player';busy=false;return;}
-  turn='enemy';busy=true;updateHUD();
+  turn='enemy';busy=true;
   setTimeout(enemyTurn,600);
 }
 
@@ -459,20 +501,6 @@ function enemyTurn(){
   log('Twoja tura.');
 }
 
-function showEQ(){
-  if(!canAct())return;
-  menu.innerHTML='';
-  if(!inventory.length){const d=document.createElement('div');d.textContent='EQ puste';menu.appendChild(d);}
-  inventory.forEach((it,i)=>{
-    const d=document.createElement('div');
-    d.textContent=(i+1)+'. '+it.icon+' '+it.name+' ['+rarityNames[it.rarity]+'] '+Object.entries(it.stats).map(([k,v])=>k+' +'+v).join(', ');
-    d.onclick=()=>{useItem(i);menu.style.display='none';};
-    menu.appendChild(d);
-  });
-  const c=document.createElement('div');c.textContent='Zamknij';c.onclick=()=>menu.style.display='none';menu.appendChild(c);
-  menu.style.display='block';
-}
-
 function useItem(i){
   const it=inventory[i];
   if(it.stats.hp){player.maxHp+=it.stats.hp;player.hp+=it.stats.hp;}
@@ -494,9 +522,9 @@ document.querySelectorAll('.dbtn').forEach(b=>{
     if(d==='right')move(1,0);
   });
 });
-document.getElementById('btnAttack').onclick=attackMenu;
-document.getElementById('btnWait').onclick=()=>{if(canAct()){log('Czekasz.');endTurn();}};
-document.getElementById('btnBag').onclick=showEQ;
+document.getElementById('btnLight').onclick=normalAttack;
+document.getElementById('btnStrong').onclick=strongAttack;
+document.getElementById('btnSpecial').onclick=specialAttack;
 document.getElementById('btnMenu').onclick=()=>showScreen('menu');
 document.getElementById('btnNew').onclick=()=>showScreen('classSelect');
 document.getElementById('btnContinue').onclick=()=>{if(!loadGame())log('Brak zapisu.');};
@@ -507,7 +535,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowDown'||e.key==='s')move(0,1);
   if(e.key==='ArrowLeft'||e.key==='a')move(-1,0);
   if(e.key==='ArrowRight'||e.key==='d')move(1,0);
-  if(e.key===' '||e.key==='j')attackMenu();
+  if(e.key===' '||e.key==='j')normalAttack();
 });
 
 showScreen('menu');
