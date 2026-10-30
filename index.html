@@ -10,7 +10,7 @@
   #app { flex:1; display:flex; flex-direction:row; min-height:0; }
   #gameArea { flex:2; display:flex; flex-direction:column; min-width:0; }
   #stage { position:relative; flex:1; background:#0f380f; border-right:4px solid #306230; min-height:0; }
-  svg#svg { width:100%; height:100%; display:block; }
+  svg#svg { width:100%; height:100%; display:block; cursor:crosshair; }
   #hud { position:absolute; top:0; left:0; right:0; height:12%; background:#306230; border-bottom:3px solid #8bac0f; display:flex; align-items:center; gap:6px; padding:0 6px; font-size:clamp(8px,1.2vw,12px); }
   .mini { flex:1; height:40%; background:#0f380f; border:2px solid #8bac0f; position:relative; min-width:30px; }
   .mini i { position:absolute; inset:0; background:#e45c10; }
@@ -20,17 +20,20 @@
   .dbtn { background:#306230; border:2px solid #8bac0f; color:#c7f0d8; display:flex; align-items:center; justify-content:center; font-size:clamp(12px,2vw,20px); user-select:none; cursor:pointer; }
   .dbtn:active { background:#8bac0f; color:#0f380f; }
   #msg { position:absolute; left:26%; right:4%; bottom:4%; background:#0f380f; border:3px solid #8bac0f; padding:6px 8px; font-size:clamp(9px,1.3vw,13px); min-height:2.4em; }
+  #msg b { color:#e8d44d; }
   #menu { position:absolute; left:26%; bottom:18%; width:40%; background:#0f380f; border:3px solid #8bac0f; padding:8px; font-size:clamp(9px,1.3vw,13px); display:none; z-index:5; }
   #menu div { padding:4px 6px; cursor:pointer; }
   #menu div:hover { background:#306230; }
-  #sidePanel { flex:1; background:#0f380f; border-left:4px solid #306230; display:flex; flex-direction:column; padding:2%; gap:2%; min-width:220px; overflow:auto; }
+  #sidePanel { flex:1; background:#0f380f; border-left:4px solid #306230; display:flex; flex-direction:column; padding:2%; gap:2%; min-width:230px; overflow:auto; }
   .panelTitle { font-size:clamp(10px,1.4vw,14px); color:#8bac0f; border-bottom:2px solid #306230; padding-bottom:2px; }
   #stats { font-size:clamp(9px,1.2vw,12px); line-height:1.5; }
   #attackBtns { display:flex; flex-direction:column; gap:4px; }
   .atk { background:#306230; border:2px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(9px,1.2vw,12px); padding:6px; cursor:pointer; text-align:left; }
   .atk:active { background:#8bac0f; color:#0f380f; }
+  .atk small { display:block; color:#8bac0f; font-size:clamp(8px,1vw,10px); }
   #eq { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
-  .slot { aspect-ratio:1; background:#1b4a1b; border:2px solid #306230; display:flex; align-items:center; justify-content:center; font-size:clamp(12px,1.8vw,18px); cursor:pointer; }
+  .slot { aspect-ratio:1; background:#1b4a1b; border:2px solid #306230; display:flex; align-items:center; justify-content:center; font-size:clamp(12px,1.8vw,18px); cursor:pointer; position:relative; }
+  .slot span { position:absolute; bottom:1px; right:3px; font-size:9px; color:#8bac0f; }
   #overlay { position:absolute; inset:0; background:#0f380f; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3%; z-index:20; text-align:center; padding:4%; }
   #overlay h1 { font-size:clamp(14px,3vw,28px); }
   #overlay p { font-size:clamp(9px,1.4vw,13px); color:#8bac0f; }
@@ -67,7 +70,7 @@
       <div id="msg" class="hidden"></div>
       <div id="overlay">
         <h1>PIXEL DUNGEON TACTICS</h1>
-        <p id="overlayText">Turowa gra pixelowa w stylu Game Boya.</p>
+        <p id="overlayText">Turowa gra pixelowa w stylu Game Boya.<br>Ruch: WASD/strzałki. Ataki: 1/2/3, Tab – zmiana celu, Enter – potwierdź.</p>
         <div id="menuButtons">
           <button class="mbtn" id="btnNew">NOWA GRA</button>
           <button class="mbtn" id="btnContinue">KONTYNUUJ</button>
@@ -83,15 +86,16 @@
   <div id="sidePanel" class="hidden">
     <div class="panelTitle">BOHATER</div>
     <div id="stats">-</div>
-    <div class="panelTitle">ATAKI</div>
+    <div class="panelTitle">ATAKI (1/2/3, Tab – cel, Enter – zatwierdź)</div>
     <div id="attackBtns">
-      <button class="atk" id="btnLight">Lekki atak (10 STA)</button>
-      <button class="atk" id="btnStrong">Silny: -</button>
-      <button class="atk" id="btnSpecial">Specjalny: Pocisk mocy (15 MP)</button>
+      <button class="atk" id="btnLight">1. Lekki atak <small>10 STA</small></button>
+      <button class="atk" id="btnStrong">2. Silny: - <small>-</small></button>
+      <button class="atk" id="btnSpecial">3. Specjalny: Pocisk mocy <small>15 MP</small></button>
+      <button class="atk" id="btnEnd">Koniec tury (E)</button>
     </div>
-    <div class="panelTitle">EKWIPUNEK</div>
+    <div class="panelTitle">EKWIPUNEK (kliknij przedmiot)</div>
     <div id="eq"></div>
-    <button class="atk" id="btnMenu" style="margin-top:auto">MENU</button>
+    <button class="atk" id="btnMenu" style="margin-top:auto">MENU (Esc)</button>
   </div>
 </div>
 
@@ -111,92 +115,92 @@ let screen='menu';
 let player=null, enemies=[], drops=[], inventory=[];
 let currentLevel=1, turn='player', busy=false, exitPos=null;
 let lastDir={x:1,y:0};
+let targeting=null, targetIdx=0;
 
 const levels={
-  1:{enemies:3,items:2,name:'Komnaty wejściowe'},
-  2:{enemies:4,items:3,name:'Korytarze mroku'},
-  3:{enemies:5,items:3,name:'Sala bossa'}
+  1:{enemies:3,items:3,name:'Komnaty wejściowe'},
+  2:{enemies:4,items:4,name:'Korytarze mroku'},
+  3:{enemies:5,items:4,name:'Sala bossa'}
 };
 
 const rarityColors={common:'#9e9e9e',uncommon:'#4caf50',rare:'#2196f3',epic:'#9c27b0',legendary:'#ffb300'};
 const rarityNames={common:'zwykły',uncommon:'niezwykły',rare:'rzadki',epic:'epicki',legendary:'legendarny'};
 
 const weapons={
-  miecz:{name:'Miecz',icon:'🗡️',strong:{name:'Cięcie krążące',cost:{sta:25}}},
-  wlocznia:{name:'Włócznia',icon:'🔻',strong:{name:'Szarża',cost:{sta:20,hp:5}}},
-  bulawa:{name:'Buława',icon:'🔨',strong:{name:'Trzask ziemi',cost:{sta:30,mp:5}}},
-  kostur:{name:'Kostur maga',icon:'🪄',strong:{name:'Wybuch mocy',cost:{mp:15}}}
+  miecz:{name:'Miecz',icon:'🗡️',strong:{name:'Cięcie krążące',cost:{sta:25},pattern:'circle'}},
+  wlocznia:{name:'Włócznia',icon:'🔻',strong:{name:'Szarża',cost:{sta:20,hp:5},pattern:'line'}},
+  bulawa:{name:'Buława',icon:'🔨',strong:{name:'Trzask ziemi',cost:{sta:30,mp:5},pattern:'cross'}},
+  kostur:{name:'Kostur maga',icon:'🪄',strong:{name:'Wybuch mocy',cost:{mp:15},pattern:'cross'}}
 };
-const strongByWeapon={miecz:'circle',wlocznia:'line',bulawa:'cross',kostur:'cross'};
 
-function say(t){msg.textContent=t;}
+const potions={
+  hp:{name:'Mikstura zdrowia',icon:'❤️',desc:'+30 HP'},
+  sta:{name:'Mikstura staminy',icon:'⚡',desc:'+40 STA'},
+  mp:{name:'Mikstura many',icon:'🔮',desc:'+25 MP'}
+};
+
+function say(t){msg.innerHTML=t;}
 function log(t){say(t);}
 
 function showScreen(s){
   screen=s;
   if(s==='menu'){
     overlay.classList.remove('hidden');
-    hud.classList.add('hidden');
-    dpad.classList.add('hidden');
-    msg.classList.add('hidden');
-    sidePanel.classList.add('hidden');
+    hud.classList.add('hidden');dpad.classList.add('hidden');msg.classList.add('hidden');sidePanel.classList.add('hidden');
     document.getElementById('menuButtons').classList.remove('hidden');
     document.getElementById('classButtons').classList.add('hidden');
-    document.getElementById('overlayText').textContent='Turowa gra pixelowa w stylu Game Boya.';
     document.getElementById('btnContinue').style.display=localStorage.getItem(SAVE_KEY)?'block':'none';
   }
   if(s==='classSelect'){
     overlay.classList.remove('hidden');
-    hud.classList.add('hidden');
-    dpad.classList.add('hidden');
-    msg.classList.add('hidden');
-    sidePanel.classList.add('hidden');
+    hud.classList.add('hidden');dpad.classList.add('hidden');msg.classList.add('hidden');sidePanel.classList.add('hidden');
     document.getElementById('menuButtons').classList.add('hidden');
     document.getElementById('classButtons').classList.remove('hidden');
-    document.getElementById('overlayText').textContent='Wybierz klasę postaci.';
+    document.getElementById('overlayText').innerHTML='Wybierz klasę postaci.<br>Ruch: WASD/strzałki. Ataki: 1/2/3.';
   }
   if(s==='map'||s==='victory'||s==='gameOver'){
     overlay.classList.add('hidden');
     if(s==='map'){
-      hud.classList.remove('hidden');
-      dpad.classList.remove('hidden');
-      msg.classList.remove('hidden');
-      sidePanel.classList.remove('hidden');
+      hud.classList.remove('hidden');dpad.classList.remove('hidden');msg.classList.remove('hidden');sidePanel.classList.remove('hidden');
     } else {
-      hud.classList.add('hidden');
-      dpad.classList.add('hidden');
-      msg.classList.add('hidden');
-      sidePanel.classList.add('hidden');
+      hud.classList.add('hidden');dpad.classList.add('hidden');msg.classList.add('hidden');sidePanel.classList.add('hidden');
     }
   }
 }
 
 function newGame(cls){
   if(cls==='warrior'){
-    player={cls:'warrior',x:2,y:4,hp:120,maxHp:120,sta:100,maxSta:100,mp:20,maxMp:20,sila:12,magia:3,weapon:'miecz'};
+    player={cls:'warrior',x:2,y:4,hp:120,maxHp:120,sta:100,maxSta:100,mp:20,maxMp:20,sila:12,magia:3,
+      equip:{weapon:'miecz',armor:null,helm:null,ring:null}};
   } else {
-    player={cls:'mage',x:2,y:4,hp:80,maxHp:80,sta:100,maxSta:100,mp:60,maxMp:60,sila:4,magia:14,weapon:'kostur'};
+    player={cls:'mage',x:2,y:4,hp:80,maxHp:80,sta:100,maxSta:100,mp:60,maxMp:60,sila:4,magia:14,
+      equip:{weapon:'kostur',armor:null,helm:null,ring:null}};
   }
   inventory=[];
   currentLevel=1;
   loadLevel(1);
   showScreen('map');
-  log('Poziom 1: '+levels[1].name+'. Pokonaj wrogów i znajdź wyjście.');
+  log('Poziom 1: '+levels[1].name+'.<br>Ruch nie kończy tury – możesz się ruszać i potem atakować.<br><b>1</b> lekki, <b>2</b> silny, <b>3</b> specjalny, <b>E</b> koniec tury.');
   saveGame();
 }
 
 function loadLevel(n){
   currentLevel=n;
-  enemies=[];
-  drops=[];
-  exitPos=null;
+  enemies=[];drops=[];exitPos=null;targeting=null;
   player.x=2;player.y=4;
   const cfg=levels[n];
   for(let i=0;i<cfg.enemies;i++){
     enemies.push({x:10+Math.floor(Math.random()*8),y:1+Math.floor(Math.random()*(ROWS-2)),hp:30+n*5,maxHp:30+n*5,dir:1});
   }
   for(let i=0;i<cfg.items;i++){
-    drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'item',...generateItem(rollRarity())});
+    const r=Math.random();
+    if(r<0.5){
+      const kinds=['hp','sta','mp'];
+      const k=kinds[Math.floor(Math.random()*3)];
+      drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'potion',potion:k,icon:potions[k].icon,rarity:'common',name:potions[k].name,stats:{}});
+    } else {
+      drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'item',...generateItem(rollRarity())});
+    }
   }
   turn='player';busy=false;
   render();
@@ -214,6 +218,7 @@ function loadGame(){
     const d=JSON.parse(raw);
     player=d.player;inventory=d.inventory;currentLevel=d.currentLevel;
     enemies=d.enemies;drops=d.drops;exitPos=d.exitPos;
+    if(!player.equip)player.equip={weapon:player.weapon||'miecz',armor:null,helm:null,ring:null};
     showScreen('map');
     render();
     log('Wczytano zapis. Poziom '+currentLevel+': '+levels[currentLevel].name);
@@ -234,14 +239,26 @@ function drawMap(){
     rect(exitPos.x*T+4,off+exitPos.y*T+4,T-8,T-8,'#e8d44d');
     text(exitPos.x*T+8,off+exitPos.y*T+22,'▶','#0f380f',14);
   }
+  // podświetlenie celów
+  if(targeting){
+    targeting.targets.forEach((e,i)=>{
+      const x=e.x*T,y=44+e.y*T;
+      rect(x+2,y+2,T-4,T-4, i===targetIdx?'#e8d44d':'#4da3e8');
+      text(x+6,y+20,(i+1),'#0f380f',14);
+    });
+  }
 }
 
 function drawPlayer(){
   if(!player)return;
   const x=player.x*T,y=44+player.y*T;
   rect(x+9,y+6,14,14,'#e8d44d');
-  rect(x+7,y+20,18,9,player.cls==='warrior'?'#4da3e8':'#9c27b0');
-  const w=player.weapon;
+  // zbroja zmienia kolor torsu
+  const bodyColor=player.equip.armor?'#8b5a2b':(player.cls==='warrior'?'#4da3e8':'#9c27b0');
+  rect(x+7,y+20,18,9,bodyColor);
+  if(player.equip.helm)rect(x+8,y+4,16,5,'#9e9e9e');
+  if(player.equip.ring){rect(x+22,y+26,4,4,'#ffb300');}
+  const w=player.equip.weapon;
   if(w==='miecz')rect(x+25,y+16,3,12,'#c7f0d8');
   if(w==='wlocznia'){rect(x+25,y+8,3,20,'#c7f0d8');rect(x+24,y+6,5,5,'#e45c10');}
   if(w==='bulawa'){rect(x+25,y+14,3,14,'#8b5a2b');rect(x+23,y+10,7,7,'#9e9e9e');}
@@ -282,15 +299,19 @@ function updateHUD(){
   document.querySelector('#mpBar i').style.width=(player.mp/player.maxMp*100)+'%';
   document.getElementById('levelLabel').textContent='Poziom '+currentLevel;
   document.getElementById('turnLabel').textContent=turn==='player'?'Twoja tura':'Tura wroga';
+  const eq=player.equip;
+  const eqNames={weapon:weapons[eq.weapon].name,armor:eq.armor?eq.armor.name:'-',helm:eq.helm?eq.helm.name:'-',ring:eq.ring?eq.ring.name:'-'};
   document.getElementById('stats').innerHTML=
     'Klasa: '+(player.cls==='warrior'?'Wojownik':'Mag')+'<br>'+
-    'Broń: '+weapons[player.weapon].name+'<br>'+
+    'Broń: '+eqNames.weapon+'<br>'+
+    'Zbroja: '+eqNames.armor+'<br>'+
+    'Hełm: '+eqNames.helm+'<br>'+
+    'Pierścień: '+eqNames.ring+'<br>'+
     'HP: '+player.hp+'/'+player.maxHp+'<br>'+
     'Stamina: '+player.sta+'/'+player.maxSta+'<br>'+
-    'Moc magiczna: '+player.magia+'<br>'+
-    'Siła: '+player.sila;
-  const w=weapons[player.weapon];
-  document.getElementById('btnStrong').textContent='Silny: '+w.strong.name+' ('+costText(w.strong.cost)+')';
+    'Moc: '+player.magia+' | Siła: '+player.sila;
+  const w=weapons[eq.weapon];
+  document.getElementById('btnStrong').innerHTML='2. Silny: '+w.strong.name+' <small>'+costText(w.strong.cost)+'</small>';
   renderEQ();
 }
 
@@ -312,11 +333,61 @@ function renderEQ(){
     if(it){
       s.textContent=it.icon;
       s.style.borderColor=rarityColors[it.rarity];
-      s.title=it.name+' ['+rarityNames[it.rarity]+'] '+Object.entries(it.stats).map(([k,v])=>k+' +'+v).join(', ');
-      s.onclick=()=>useItem(i);
+      let info=it.name+' ['+rarityNames[it.rarity]+']';
+      if(it.kind==='potion')info+=' – '+potions[it.potion].desc;
+      else info+=' – '+Object.entries(it.stats).map(([k,v])=>k+' +'+v).join(', ');
+      s.title=info;
+      const num=document.createElement('span');
+      num.textContent=(i+1);
+      s.appendChild(num);
+      s.onclick=()=>openItemMenu(i);
     }
     eqDiv.appendChild(s);
   }
+}
+
+function openItemMenu(i){
+  menu.innerHTML='';
+  const it=inventory[i];
+  const title=document.createElement('div');
+  title.textContent=it.icon+' '+it.name;
+  title.style.fontWeight='bold';
+  menu.appendChild(title);
+  const add=(label,fn)=>{
+    const d=document.createElement('div');d.textContent=label;d.onclick=()=>{menu.style.display='none';fn();};menu.appendChild(d);
+  };
+  if(it.kind==='potion')add('Użyj ('+potions[it.potion].desc+')',()=>usePotion(i));
+  else add('Założ / wybierz',()=>equipItem(i));
+  add('Zniszcz',()=>destroyItem(i));
+  add('Rozłóż (craft – wkrótce)',()=>log('Rozkładanie będzie dostępne po dodaniu craftu.'));
+  add('Zamknij',()=>{});
+  menu.style.display='block';
+}
+
+function usePotion(i){
+  const it=inventory[i];
+  if(it.potion==='hp'){player.hp=Math.min(player.maxHp,player.hp+30);log('Wypito miksturę zdrowia: +30 HP');}
+  if(it.potion==='sta'){player.sta=Math.min(player.maxSta,player.sta+40);log('Wypito miksturę staminy: +40 STA');}
+  if(it.potion==='mp'){player.mp=Math.min(player.maxMp,player.mp+25);log('Wypito miksturę many: +25 MP');}
+  inventory.splice(i,1);
+  saveGame();render();
+}
+
+function equipItem(i){
+  const it=inventory[i];
+  const slot=it.slot;
+  const old=player.equip[slot];
+  player.equip[slot]=it;
+  inventory.splice(i,1);
+  if(old)inventory.push(old);
+  log('Wyposażono: '+it.name);
+  saveGame();render();
+}
+
+function destroyItem(i){
+  log('Zniszczono: '+inventory[i].name);
+  inventory.splice(i,1);
+  saveGame();render();
 }
 
 function canAct(){return player&&screen==='map'&&turn==='player'&&!busy;}
@@ -324,12 +395,13 @@ function canAct(){return player&&screen==='map'&&turn==='player'&&!busy;}
 function move(dx,dy){
   if(!canAct())return;
   lastDir={x:dx,y:dy};
+  targeting=null;
   const nx=player.x+dx,ny=player.y+dy;
   if(nx>0&&nx<COLS-1&&ny>0&&ny<ROWS-1){
     player.x=nx;player.y=ny;
     checkPickup();
     checkExit();
-    if(screen==='map'){saveGame();endTurn();}
+    if(screen==='map'){saveGame();render();log('Ruch wykonany. Możesz jeszcze atakować (1/2/3) lub zakończyć turę (E).');}
   }
 }
 
@@ -337,10 +409,12 @@ function checkPickup(){
   drops=drops.filter(d=>{
     if(d.x===player.x&&d.y===player.y){
       if(d.kind==='weapon'){
-        player.weapon=d.weapon;
-        log('Podniesiono: '+weapons[d.weapon].name);
+        const old=player.equip.weapon;
+        player.equip.weapon=d.weapon;
+        if(old)inventory.push({kind:'weapon',weapon:old,icon:weapons[old].icon,rarity:'common',name:weapons[old].name,stats:{},slot:'weapon'});
+        log('Podniesiono i wyposażono: '+weapons[d.weapon].name);
       } else {
-        if(inventory.length<8){inventory.push(d);log('Zdobyto: '+d.name+' ['+rarityNames[d.rarity]+']');}
+        if(inventory.length<8){inventory.push(d);log('Zdobyto: '+d.name);}
         else log('EQ pełne!');
       }
       return false;
@@ -375,67 +449,95 @@ function payCost(c){
   return true;
 }
 
-function normalAttack(){
-  if(!canAct())return;
-  if(!payCost({sta:10})){log('Za mało staminy!');return;}
-  const dmg=player.cls==='warrior'?player.sila:Math.ceil(player.magia/2);
-  hitAdjacent(dmg);
-  log('Lekki atak: '+dmg+' obrażeń.');
-  endTurn();
-}
-
-function strongAttack(){
-  if(!canAct())return;
-  const w=weapons[player.weapon];
-  if(!payCost(w.strong.cost)){log('Brak zasobów na: '+w.strong.name);return;}
-  const type=strongByWeapon[player.weapon];
-  const dmg=player.cls==='warrior'?player.sila*2:player.magia*2;
-  let hit=0;
-  if(type==='circle')hit=hitAdjacent(dmg);
-  else if(type==='line'){
-    for(let i=1;i<=2;i++){
-      const tx=player.x+lastDir.x*i,ty=player.y+lastDir.y*i;
-      enemies.forEach(e=>{if(e.x===tx&&e.y===ty){e.hp-=dmg;hit++;}});
-    }
-  } else if(type==='cross'){
-    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
-      enemies.forEach(e=>{if(e.x===player.x+dx&&e.y===player.y+dy){e.hp-=dmg;hit++;}});
-    });
+function getTargets(type){
+  const w=weapons[player.equip.weapon];
+  if(type==='light'){
+    return enemies.filter(e=>Math.abs(e.x-player.x)<=1&&Math.abs(e.y-player.y)<=1);
   }
-  log(w.strong.name+': '+hit+' trafień, '+dmg+' obrażeń.');
-  cleanupEnemies();
-  endTurn();
+  if(type==='strong'){
+    const p=w.strong.pattern;
+    if(p==='circle')return enemies.filter(e=>Math.abs(e.x-player.x)<=1&&Math.abs(e.y-player.y)<=1);
+    if(p==='line'){
+      return enemies.filter(e=>{
+        const dx=e.x-player.x,dy=e.y-player.y;
+        if(dx===0&&dy===0)return false;
+        if(dx!==0&&dy!==0)return false;
+        return Math.max(Math.abs(dx),Math.abs(dy))<=2;
+      });
+    }
+    if(p==='cross'){
+      return enemies.filter(e=>{
+        const dx=e.x-player.x,dy=e.y-player.y;
+        return (dx===0&&Math.abs(dy)===1)||(dy===0&&Math.abs(dx)===1);
+      });
+    }
+  }
+  if(type==='special'){
+    return enemies.filter(e=>Math.abs(e.x-player.x)+Math.abs(e.y-player.y)<=4);
+  }
+  return [];
 }
 
-function specialAttack(){
+function startTargeting(type){
   if(!canAct())return;
-  if(!payCost({mp:15})){log('Za mało mocy magicznej!');return;}
-  const dmg=player.magia*2;
-  let best=null,bd=99;
-  enemies.forEach(e=>{const d=Math.abs(e.x-player.x)+Math.abs(e.y-player.y);if(d<bd){bd=d;best=e;}});
-  if(best){best.hp-=dmg;log('Pocisk mocy trafia za '+dmg+' obrażeń.');}
-  else log('Pocisk mocy chybia.');
+  const targets=getTargets(type);
+  if(!targets.length){log('Brak wrogów w zasięgu tego ataku.');return;}
+  targeting={type,targets};
+  targetIdx=0;
+  render();
+  log('Wybierz cel: kliknij wroga na planszy lub <b>Tab</b> zmienia cel, <b>Enter</b> potwierdza.');
+}
+
+function confirmTarget(){
+  if(!targeting)return;
+  const e=targeting.targets[targetIdx];
+  executeAttack(targeting.type,e);
+  targeting=null;
+}
+
+function executeAttack(type,e){
+  const w=weapons[player.equip.weapon];
+  if(type==='light'){
+    if(!payCost({sta:10})){log('Za mało staminy! (10 STA)');return;}
+    e.hp-=player.cls==='warrior'?player.sila:Math.ceil(player.magia/2);
+    log('Lekki atak (1): trafiono wroga. Koszt: 10 STA.');
+  }
+  if(type==='strong'){
+    if(!payCost(w.strong.cost)){log('Brak zasobów: '+costText(w.strong.cost));return;}
+    e.hp-=player.cls==='warrior'?player.sila*2:player.magia*2;
+    log(w.strong.name+' (2): trafiono wroga. Koszt: '+costText(w.strong.cost)+'.');
+  }
+  if(type==='special'){
+    if(!payCost({mp:15})){log('Za mało MP! (15 MP)');return;}
+    e.hp-=player.magia*2;
+    log('Pocisk mocy (3): '+player.magia*2+' obrażeń. Koszt: 15 MP.');
+  }
   cleanupEnemies();
   endTurn();
 }
 
-function hitAdjacent(dmg){
-  let hit=0;
-  [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]].forEach(([dx,dy])=>{
-    enemies.forEach(e=>{if(e.x===player.x+dx&&e.y===player.y+dy){e.hp-=dmg;hit++;}});
-  });
-  cleanupEnemies();
-  return hit;
-}
+svg.addEventListener('click',ev=>{
+  if(!targeting)return;
+  const r=svg.getBoundingClientRect();
+  const sx=640/r.width, sy=360/r.height;
+  const x=Math.floor((ev.clientX-r.left)*sx/T);
+  const y=Math.floor(((ev.clientY-r.top)*sy-44)/T);
+  const idx=targeting.targets.findIndex(e=>e.x===x&&e.y===y);
+  if(idx>=0){targetIdx=idx;confirmTarget();}
+});
 
 function cleanupEnemies(){
   enemies=enemies.filter(e=>{
     if(e.hp<=0){
       const r=Math.random();
-      if(r<0.4){
+      if(r<0.3){
         const wp=['miecz','wlocznia','bulawa','kostur'][Math.floor(Math.random()*4)];
-        drops.push({x:e.x,y:e.y,kind:'weapon',weapon:wp,icon:weapons[wp].icon,rarity:'common',name:weapons[wp].name,stats:{}});
-      } else if(r<0.8){
+        drops.push({x:e.x,y:e.y,kind:'weapon',weapon:wp,icon:weapons[wp].icon,rarity:'common',name:weapons[wp].name,stats:{},slot:'weapon'});
+      } else if(r<0.6){
+        const kinds=['hp','sta','mp'];
+        const k=kinds[Math.floor(Math.random()*3)];
+        drops.push({x:e.x,y:e.y,kind:'potion',potion:k,icon:potions[k].icon,rarity:'common',name:potions[k].name,stats:{}});
+      } else if(r<0.85){
         drops.push({x:e.x,y:e.y,kind:'item',...generateItem(rollRarity())});
       }
       return false;
@@ -458,17 +560,22 @@ function rollRarity(){
 }
 
 function generateItem(rarity){
-  const bases=[{n:'Mikstura',i:'🧪'},{n:'Pierścień',i:'💍'},{n:'Amulet',i:'🔮'},{n:'Zbroja',i:'🛡️'}];
-  const b=bases[Math.floor(Math.random()*bases.length)];
+  const cats=[
+    {slot:'armor',n:'Zbroja',i:'🛡️'},
+    {slot:'helm',n:'Hełm',i:'⛑️'},
+    {slot:'ring',n:'Pierścień',i:'💍'}
+  ];
+  const c=cats[Math.floor(Math.random()*cats.length)];
   const stats={};
   const pool=['hp','sila','stamina','magia'];
   const cnt={common:1,uncommon:2,rare:2,epic:3,legendary:4}[rarity];
   const pow={common:2,uncommon:4,rare:6,epic:9,legendary:14}[rarity];
   for(let i=0;i<cnt;i++){const s=pool[Math.floor(Math.random()*4)];stats[s]=(stats[s]||0)+Math.ceil(Math.random()*pow);}
-  return {name:b.n,icon:b.i,rarity,stats};
+  return {name:c.n,icon:c.i,rarity,stats,slot:c.slot};
 }
 
 function endTurn(){
+  targeting=null;
   render();
   saveGame();
   if(!enemies.length){log('Poziom czysty. Wejdź na wyjście ▶');turn='player';busy=false;return;}
@@ -498,19 +605,7 @@ function enemyTurn(){
   player.sta=Math.min(player.maxSta,player.sta+15);
   player.mp=Math.min(player.maxMp,player.mp+5);
   render();
-  log('Twoja tura.');
-}
-
-function useItem(i){
-  const it=inventory[i];
-  if(it.stats.hp){player.maxHp+=it.stats.hp;player.hp+=it.stats.hp;}
-  if(it.stats.sila)player.sila+=it.stats.sila;
-  if(it.stats.stamina){player.maxSta+=it.stats.stamina;player.sta+=it.stats.stamina;}
-  if(it.stats.magia)player.magia+=it.stats.magia;
-  inventory.splice(i,1);
-  log('Użyto: '+it.name);
-  saveGame();
-  render();
+  log('Twoja tura. Stamina +15, MP +5.<br>1 – lekki, 2 – silny, 3 – specjalny, E – koniec tury.');
 }
 
 document.querySelectorAll('.dbtn').forEach(b=>{
@@ -522,9 +617,10 @@ document.querySelectorAll('.dbtn').forEach(b=>{
     if(d==='right')move(1,0);
   });
 });
-document.getElementById('btnLight').onclick=normalAttack;
-document.getElementById('btnStrong').onclick=strongAttack;
-document.getElementById('btnSpecial').onclick=specialAttack;
+document.getElementById('btnLight').onclick=()=>startTargeting('light');
+document.getElementById('btnStrong').onclick=()=>startTargeting('strong');
+document.getElementById('btnSpecial').onclick=()=>startTargeting('special');
+document.getElementById('btnEnd').onclick=()=>{if(canAct()){log('Koniec tury.');endTurn();}};
 document.getElementById('btnMenu').onclick=()=>showScreen('menu');
 document.getElementById('btnNew').onclick=()=>showScreen('classSelect');
 document.getElementById('btnContinue').onclick=()=>{if(!loadGame())log('Brak zapisu.');};
@@ -535,7 +631,13 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowDown'||e.key==='s')move(0,1);
   if(e.key==='ArrowLeft'||e.key==='a')move(-1,0);
   if(e.key==='ArrowRight'||e.key==='d')move(1,0);
-  if(e.key===' '||e.key==='j')normalAttack();
+  if(e.key==='1')startTargeting('light');
+  if(e.key==='2')startTargeting('strong');
+  if(e.key==='3')startTargeting('special');
+  if(e.key==='Tab'){e.preventDefault();if(targeting){targetIdx=(targetIdx+1)%targeting.targets.length;render();log('Cel: '+(targetIdx+1)+'/'+targeting.targets.length);}}
+  if(e.key==='Enter'){if(targeting)confirmTarget();}
+  if(e.key==='e'||e.key==='E'){if(canAct()){log('Koniec tury.');endTurn();}}
+  if(e.key==='Escape')showScreen('menu');
 });
 
 showScreen('menu');
