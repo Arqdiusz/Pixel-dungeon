@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Pixel Dungeon Tactics</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0b0b0b; color:#8bac0f; font-family:"Courier New",monospace; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  #screen { flex:1; display:flex; align-items:center; justify-content:center; background:#000; }
+  #stage { position:relative; width:min(96vw, calc(96vh * 16 / 9)); aspect-ratio:16/9; background:#0f380f; border:6px solid #306230; image-rendering:pixelated; }
+  svg { width:100%; height:100%; display:block; image-rendering:pixelated; }
+  #hud { position:absolute; top:0; left:0; right:0; height:12%; background:#306230; border-bottom:3px solid #8bac0f; display:flex; align-items:center; gap:8px; padding:0 8px; font-size:clamp(9px,1.5vw,13px); color:#c7f0d8; }
+  .mini { width:16%; height:38%; background:#0f380f; border:2px solid #8bac0f; position:relative; }
+  .mini i { position:absolute; inset:0; background:#e45c10; }
+  #stBar i { background:#e8d44d; }
+  #mpBar i { background:#4da3e8; }
+  #controls { height:26%; background:#0f380f; border-top:4px solid #306230; display:flex; align-items:center; justify-content:space-between; padding:2% 4%; }
+  #dpad { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); width:24%; aspect-ratio:1; }
+  .dbtn { background:#306230; border:2px solid #8bac0f; color:#c7f0d8; display:flex; align-items:center; justify-content:center; font-size:clamp(10px,2vw,18px); user-select:none; cursor:pointer; }
+  .dbtn:active { background:#8bac0f; color:#0f380f; }
+  #actions { display:flex; gap:3%; width:58%; }
+  .abtn { flex:1; background:#306230; border:3px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(9px,1.6vw,14px); padding:6% 2%; cursor:pointer; }
+  .abtn:active { background:#8bac0f; color:#0f380f; }
+  #overlay { position:absolute; inset:0; background:#0f380f; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4%; z-index:10; text-align:center; padding:4%; }
+  #overlay h1 { font-size:clamp(16px,4vw,32px); color:#c7f0d8; margin:0; }
+  #overlay p { font-size:clamp(9px,1.6vw,14px); color:#8bac0f; margin:0; }
+  .mbtn { background:#306230; border:3px solid #8bac0f; color:#c7f0d8; font-family:inherit; font-size:clamp(10px,2vw,16px); padding:3% 8%; cursor:pointer; min-width:40%; }
+  .mbtn:active { background:#8bac0f; color:#0f380f; }
+  #menu { position:absolute; left:4%; bottom:28%; width:46%; background:#0f380f; border:3px solid #8bac0f; padding:8px; font-size:clamp(9px,1.5vw,13px); color:#c7f0d8; display:none; z-index:5; }
+  #menu div { padding:4px 6px; cursor:pointer; }
+  #menu div:hover { background:#306230; }
+  #msg { position:absolute; left:4%; bottom:13%; width:70%; background:#0f380f; border:3px solid #8bac0f; padding:6px 8px; font-size:clamp(9px,1.4vw,12px); color:#c7f0d8; min-height:2.2em; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<div id="screen">
+  <div id="stage">
+    <svg id="svg" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid meet"></svg>
+
+    <div id="hud" class="hidden">
+      <div>HP</div><div class="mini" id="hpBar"><i></i></div>
+      <div>STA</div><div class="mini" id="stBar"><i></i></div>
+      <div>MP</div><div class="mini" id="mpBar"><i></i></div>
+      <div id="weaponLabel" style="margin-left:auto">-</div>
+      <div id="levelLabel" style="margin-left:8px">Poziom 1</div>
+      <div id="turnLabel" style="margin-left:8px">Twoja tura</div>
+    </div>
+
+    <div id="menu"></div>
+    <div id="msg" class="hidden"></div>
+
+    <div id="controls" class="hidden">
+      <div id="dpad">
+        <div></div><div class="dbtn" data-dir="up">▲</div><div></div>
+        <div class="dbtn" data-dir="left">◀</div><div></div><div class="dbtn" data-dir="right">▶</div>
+        <div></div><div class="dbtn" data-dir="down">▼</div><div></div>
+      </div>
+      <div id="actions">
+        <button class="abtn" id="btnAttack">ATAK</button>
+        <button class="abtn" id="btnWait">CZEKAJ</button>
+        <button class="abtn" id="btnBag">EQ</button>
+        <button class="abtn" id="btnMenu">MENU</button>
+      </div>
+    </div>
+
+    <div id="overlay">
+      <h1>PIXEL DUNGEON TACTICS</h1>
+      <p id="overlayText">Turowa gra pixelowa w stylu Game Boya.</p>
+      <div id="menuButtons">
+        <button class="mbtn" id="btnNew">NOWA GRA</button>
+        <button class="mbtn" id="btnContinue">KONTYNUUJ</button>
+      </div>
+      <div id="classButtons" class="hidden">
+        <button class="mbtn" id="btnWarrior">WOJOWNIK</button>
+        <button class="mbtn" id="btnMage">MAG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const svg=document.getElementById('svg');
+const msg=document.getElementById('msg');
+const menu=document.getElementById('menu');
+const overlay=document.getElementById('overlay');
+const hud=document.getElementById('hud');
+const controls=document.getElementById('controls');
+
+const T=32, COLS=20, ROWS=9;
+const SAVE_KEY='pixelDungeonSave';
+
+let screen='menu';
+let player=null, enemies=[], drops=[], inventory=[];
+let currentLevel=1, turn='player', busy=false, exitPos=null;
+let lastDir={x:1,y:0};
+
+const levels={
+  1:{enemies:3,items:2,name:'Komnaty wejściowe'},
+  2:{enemies:4,items:3,name:'Korytarze mroku'},
+  3:{enemies:5,items:3,name='Sala bossa'}
+};
+
+const rarityColors={common:'#9e9e9e',uncommon:'#4caf50',rare:'#2196f3',epic:'#9c27b0',legendary:'#ffb300'};
+const rarityNames={common:'zwykły',uncommon:'niezwykły',rare:'rzadki',epic:'epicki',legendary:'legendarny'};
+
+const weapons={
+  miecz:{name:'Miecz',icon:'🗡️',strong:{name:'Cięcie krążące',cost:{sta:25}}},
+  wlocznia:{name:'Włócznia',icon:'🔻',strong:{name:'Szarża',cost:{sta:20,hp:5}}},
+  bulawa:{name:'Buława',icon:'🔨',strong:{name:'Trzask ziemi',cost:{sta:30,mp:5}}},
+  kostur:{name:'Kostur maga',icon:'🪄',strong:{name:'Wybuch mocy',cost:{mp:15}}}
+};
+const strongByWeapon={miecz:'circle',wlocznia:'line',bulawa:'cross',kostur:'cross'};
+
+function say(t){msg.textContent=t;}
+function log(t){say(t);}
+
+function showScreen(s){
+  screen=s;
+  if(s==='menu'){
+    overlay.classList.remove('hidden');
+    hud.classList.add('hidden');
+    controls.classList.add('hidden');
+    msg.classList.add('hidden');
+    document.getElementById('menuButtons').classList.remove('hidden');
+    document.getElementById('classButtons').classList.add('hidden');
+    document.getElementById('overlayText').textContent='Turowa gra pixelowa w stylu Game Boya.';
+    document.getElementById('btnContinue').style.display=localStorage.getItem(SAVE_KEY)?'block':'none';
+  }
+  if(s==='classSelect'){
+    overlay.classList.remove('hidden');
+    hud.classList.add('hidden');
+    controls.classList.add('hidden');
+    msg.classList.add('hidden');
+    document.getElementById('menuButtons').classList.add('hidden');
+    document.getElementById('classButtons').classList.remove('hidden');
+    document.getElementById('overlayText').textContent='Wybierz klasę postaci.';
+  }
+  if(s==='map'||s==='victory'||s==='gameOver'){
+    overlay.classList.add('hidden');
+    if(s==='map'){hud.classList.remove('hidden');controls.classList.remove('hidden');msg.classList.remove('hidden');}
+    else{hud.classList.add('hidden');controls.classList.add('hidden');msg.classList.add('hidden');}
+  }
+}
+
+function newGame(cls){
+  if(cls==='warrior'){
+    player={cls:'warrior',x:2,y:4,hp:120,maxHp:120,sta:100,maxSta:100,mp:20,maxMp:20,sila:12,magia:3,weapon:'miecz'};
+  } else {
+    player={cls:'mage',x:2,y:4,hp:80,maxHp:80,sta:100,maxSta:100,mp:60,maxMp:60,sila:4,magia:14,weapon:'kostur'};
+  }
+  inventory=[];
+  currentLevel=1;
+  loadLevel(1);
+  showScreen('map');
+  log('Poziom 1: '+levels[1].name+'. Pokonaj wrogów i znajdź wyjście.');
+  saveGame();
+}
+
+function loadLevel(n){
+  currentLevel=n;
+  enemies=[];
+  drops=[];
+  exitPos=null;
+  player.x=2;player.y=4;
+  const cfg=levels[n];
+  for(let i=0;i<cfg.enemies;i++){
+    enemies.push({x:10+Math.floor(Math.random()*8),y:1+Math.floor(Math.random()*(ROWS-2)),hp:30+ n*5,maxHp:30+n*5,dir:1});
+  }
+  for(let i=0;i<cfg.items;i++){
+    const r=rollRarity();
+    drops.push({x:5+Math.floor(Math.random()*12),y:1+Math.floor(Math.random()*(ROWS-2)),kind:'item',...generateItem(r)});
+  }
+  turn='player';busy=false;
+  render();
+}
+
+function saveGame(){
+  if(!player)return;
+  const data={player,inventory,currentLevel,enemies,drops,exitPos};
+  localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+}
+
+function loadGame(){
+  const raw=localStorage.getItem(SAVE_KEY);
+  if(!raw)return false;
+  try{
+    const d=JSON.parse(raw);
+    player=d.player;inventory=d.inventory;currentLevel=d.currentLevel;
+    enemies=d.enemies;drops=d.drops;exitPos=d.exitPos;
+    showScreen('map');
+    render();
+    log('Wczytano zapis. Poziom '+currentLevel+': '+levels[currentLevel].name);
+    return true;
+  }catch(e){return false;}
+}
+
+function rect(x,y,w,h,c){const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('fill',c);svg.appendChild(r);}
+function text(x,y,s,c,size){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('fill',c||'#c7f0d8');t.setAttribute('font-size',size||12);t.setAttribute('font-family','monospace');t.textContent=s;svg.appendChild(t);}
+
+function drawMap(){
+  const off=44;
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++)
+    rect(x*T,off+y*T,T,T,((x+y)%2)?'#1b4a1b':'#0f380f');
+  for(let x=0;x<COLS;x++){rect(x*T,off,T,T,'#306230');rect(x*T,off+(ROWS-1)*T,T,T,'#306230');}
+  for(let y=0;y<ROWS;y++){rect(0,off+y*T,T,T,'#306230');rect((COLS-1)*T,off+y*T,T,T,'#306230');}
+  if(exitPos){
+    rect(exitPos.x*T+4,off+exitPos.y*T+4,T-8,T-8,'#e8d44d');
+    text(exitPos.x*T+8,off+exitPos.y*T+22,'▶','#0f380f',14);
+  }
+}
+
+function drawPlayer(){
+  if(!player)return;
+  const x=player.x*T,y=44+player.y*T;
+  rect(x+9,y+6,14,14,'#e8d44d');
+  rect(x+7,y+20,18,9,player.cls==='warrior'?'#4da3e8':'#9c27b0');
+  const w=player.weapon;
+  if(w==='miecz')rect(x+25,y+16,3,12,'#c7f0d8');
+  if(w==='wlocznia'){rect(x+25,y+8,3,20,'#c7f0d8');rect(x+24,y+6,5,5,'#e45c10');}
+  if(w==='bulawa'){rect(x+25,y+14,3,14,'#8b5a2b');rect(x+23,y+10,7,7,'#9e9e9e');}
+  if(w==='kostur'){rect(x+25,y+10,3,20,'#8b5a2b');rect(x+23,y+6,7,7,'#4da3e8');}
+}
+
+function drawEnemies(){
+  enemies.forEach(e=>{
+    const x=e.x*T,y=44+e.y*T;
+    rect(x+8,y+8,16,16,'#e45c10');
+    rect(x+10,y+12,4,4,'#0f380f');
+    rect(x+18,y+12,4,4,'#0f380f');
+    text(x+8,y+6,Math.max(0,e.hp),'#e45c10',9);
+  });
+}
+
+function drawDrops(){
+  drops.forEach(d=>{
+    const x=d.x*T,y=44+d.y*T;
+    rect(x+9,y+9,14,14,rarityColors[d.rarity]);
+    text(x+10,y+21,d.icon,'#0f380f',12);
+  });
+}
+
+function render(){
+  svg.innerHTML='';
+  drawMap();
+  drawDrops();
+  drawEnemies();
+  drawPlayer();
+  updateHUD();
+}
+
+function updateHUD(){
+  if(!player)return;
+  document.querySelector('#hpBar i').style.width=(player.hp/player.maxHp*100)+'%';
+  document.querySelector('#stBar i').style.width=(player.sta/player.maxSta*100)+'%';
+  document.querySelector('#mpBar i').style.width=(player.mp/player.maxMp*100)+'%';
+  document.getElementById('weaponLabel').textContent=weapons[player.weapon].name;
+  document.getElementById('levelLabel').textContent='Poziom '+currentLevel;
+  document.getElementById('turnLabel').textContent=turn==='player'?'Twoja tura':'Tura wroga';
+}
+
+function canAct(){return player&&screen==='map'&&turn==='player'&&!busy;}
+
+function move(dx,dy){
+  if(!canAct())return;
+  lastDir={x:dx,y:dy};
+  const nx=player.x+dx,ny=player.y+dy;
+  if(nx>0&&nx<COLS-1&&ny>0&&ny<ROWS-1){
+    player.x=nx;player.y=ny;
+    checkPickup();
+    checkExit();
+    if(screen==='map'){saveGame();endTurn();}
+  }
+}
+
+function checkPickup(){
+  drops=drops.filter(d=>{
+    if(d.x===player.x&&d.y===player.y){
+      if(d.kind==='weapon'){
+        player.weapon=d.weapon;
+        log('Podniesiono: '+weapons[d.weapon].name);
+      } else {
+        if(inventory.length<8){inventory.push(d);log('Zdobyto: '+d.name+' ['+rarityNames[d.rarity]+']');}
+        else log('EQ pełne!');
+      }
+      return false;
+    }
+    return true;
+  });
+}
+
+function checkExit(){
+  if(exitPos&&player.x===exitPos.x&&player.y===exitPos.y){
+    if(currentLevel<3){
+      loadLevel(currentLevel+1);
+      log('Poziom '+currentLevel+': '+levels[currentLevel].name);
+      saveGame();
+    } else {
+      showScreen('victory');
+      document.getElementById('overlayText').textContent='Zwycięstwo! Ukończyłeś wszystkie poziomy.';
+      document.getElementById('menuButtons').classList.remove('hidden');
+      document.getElementById('classButtons').classList.add('hidden');
+      localStorage.removeItem(SAVE_KEY);
+    }
+  }
+}
+
+function payCost(c){
+  if(c.sta&&player.sta<c.sta)return false;
+  if(c.mp&&player.mp<c.mp)return false;
+  if(c.hp&&player.hp<=c.hp)return false;
+  if(c.sta)player.sta-=c.sta;
+  if(c.mp)player.mp-=c.mp;
+  if(c.hp)player.hp-=c.hp;
+  return true;
+}
+
+function attackMenu(){
+  if(!canAct())return;
+  menu.innerHTML='';
+  const w=weapons[player.weapon];
+  const add=(label,fn)=>{const d=document.createElement('div');d.textContent=label;d.onclick=()=>{menu.style.display='none';fn();};menu.appendChild(d);};
+  add('1. Zwykły atak (10 STA)',normalAttack);
+  add('2. Silny: '+w.strong.name+' ('+costText(w.strong.cost)+')',strongAttack);
+  add('3. Specjalny: Pocisk mocy (15 MP)',specialAttack);
+  add('Anuluj',()=>menu.style.display='none');
+  menu.style.display='block';
+}
+
+function costText(c){
+  const p=[];
+  if(c.sta)p.push(c.sta+' STA');
+  if(c.mp)p.push(c.mp+' MP');
+  if(c.hp)p.push(c.hp+' HP');
+  return p.join(', ');
+}
+
+function normalAttack(){
+  if(!payCost({sta:10})){log('Za mało staminy!');return;}
+  const dmg=player.cls==='warrior'?player.sila:Math.ceil(player.magia/2);
+  hitAdjacent(dmg);
+  log('Zwykły atak: '+dmg+' obrażeń.');
+  endTurn();
+}
+
+function strongAttack(){
+  const w=weapons[player.weapon];
+  if(!payCost(w.strong.cost)){log('Brak zasobów na: '+w.strong.name);return;}
+  const type=strongByWeapon[player.weapon];
+  const dmg=player.cls==='warrior'?player.sila*2:player.magia*2;
+  let hit=0;
+  if(type==='circle')hit=hitAdjacent(dmg);
+  else if(type==='line'){
+    for(let i=1;i<=2;i++){
+      const tx=player.x+lastDir.x*i,ty=player.y+lastDir.y*i;
+      enemies.forEach(e=>{if(e.x===tx&&e.y===ty){e.hp-=dmg;hit++;}});
+    }
+  } else if(type==='cross'){
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+      enemies.forEach(e=>{if(e.x===player.x+dx&&e.y===player.y+dy){e.hp-=dmg;hit++;}});
+    });
+  }
+  log(w.strong.name+': '+hit+' trafień, '+dmg+' obrażeń.');
+  cleanupEnemies();
+  endTurn();
+}
+
+function specialAttack(){
+  if(!payCost({mp:15})){log('Za mało mocy magicznej!');return;}
+  const dmg=player.magia*2;
+  let best=null,bd=99;
+  enemies.forEach(e=>{const d=Math.abs(e.x-player.x)+Math.abs(e.y-player.y);if(d<bd){bd=d;best=e;}});
+  if(best){best.hp-=dmg;log('Pocisk mocy trafia za '+dmg+' obrażeń.');}
+  else log('Pocisk mocy chybia.');
+  cleanupEnemies();
+  endTurn();
+}
+
+function hitAdjacent(dmg){
+  let hit=0;
+  [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]].forEach(([dx,dy])=>{
+    enemies.forEach(e=>{if(e.x===player.x+dx&&e.y===player.y+dy){e.hp-=dmg;hit++;}});
+  });
+  cleanupEnemies();
+  return hit;
+}
+
+function cleanupEnemies(){
+  enemies=enemies.filter(e=>{
+    if(e.hp<=0){
+      const r=Math.random();
+      if(r<0.4){
+        const wp=['miecz','wlocznia','bulawa','kostur'][Math.floor(Math.random()*4)];
+        drops.push({x:e.x,y:e.y,kind:'weapon',weapon:wp,icon:weapons[wp].icon,rarity:'common',name:weapons[wp].name,stats:{}});
+      } else if(r<0.8){
+        drops.push({x:e.x,y:e.y,kind:'item',...generateItem(rollRarity())});
+      }
+      return false;
+    }
+    return true;
+  });
+  if(!enemies.length&&!exitPos){
+    exitPos={x:COLS-2,y:Math.floor(ROWS/2)};
+    log('Wrogowie pokonani! Pojawiło się wyjście ▶');
+  }
+}
+
+function rollRarity(){
+  const r=Math.random();
+  if(r>0.95)return 'legendary';
+  if(r>0.85)return 'epic';
+  if(r>0.65)return 'rare';
+  if(r>0.35)return 'uncommon';
+  return 'common';
+}
+
+function generateItem(rarity){
+  const bases=[{n:'Mikstura',i:'🧪'},{n:'Pierścień',i:'💍'},{n:'Amulet',i:'🔮'},{n:'Zbroja',i:'🛡️'}];
+  const b=bases[Math.floor(Math.random()*bases.length)];
+  const stats={};
+  const pool=['hp','sila','stamina','magia'];
+  const cnt={common:1,uncommon:2,rare:2,epic:3,legendary:4}[rarity];
+  const pow={common:2,uncommon:4,rare:6,epic:9,legendary:14}[rarity];
+  for(let i=0;i<cnt;i++){const s=pool[Math.floor(Math.random()*4)];stats[s]=(stats[s]||0)+Math.ceil(Math.random()*pow);}
+  return {name:b.n,icon:b.i,rarity,stats};
+}
+
+function endTurn(){
+  render();
+  saveGame();
+  if(!enemies.length){log('Poziom czysty. Wejdź na wyjście ▶');turn='player';busy=false;return;}
+  turn='enemy';busy=true;updateHUD();
+  setTimeout(enemyTurn,600);
+}
+
+function enemyTurn(){
+  enemies.forEach(e=>{
+    const dx=Math.sign(player.x-e.x),dy=Math.sign(player.y-e.y);
+    if(Math.abs(player.x-e.x)<=1&&Math.abs(player.y-e.y)<=1){
+      player.hp-=8;log('Wróg atakuje! -8 HP');
+    } else {
+      if(Math.abs(player.x-e.x)>Math.abs(player.y-e.y))e.x+=dx;else e.y+=dy;
+    }
+  });
+  if(player.hp<=0){
+    player.hp=0;
+    showScreen('gameOver');
+    document.getElementById('overlayText').textContent='Zginąłeś na poziomie '+currentLevel+'.';
+    document.getElementById('menuButtons').classList.remove('hidden');
+    document.getElementById('classButtons').classList.add('hidden');
+    localStorage.removeItem(SAVE_KEY);
+    return;
+  }
+  turn='player';busy=false;
+  player.sta=Math.min(player.maxSta,player.sta+15);
+  player.mp=Math.min(player.maxMp,player.mp+5);
+  render();
+  log('Twoja tura.');
+}
+
+function showEQ(){
+  if(!canAct())return;
+  menu.innerHTML='';
+  if(!inventory.length){const d=document.createElement('div');d.textContent='EQ puste';menu.appendChild(d);}
+  inventory.forEach((it,i)=>{
+    const d=document.createElement('div');
+    d.textContent=(i+1)+'. '+it.icon+' '+it.name+' ['+rarityNames[it.rarity]+'] '+Object.entries(it.stats).map(([k,v])=>k+' +'+v).join(', ');
+    d.onclick=()=>{useItem(i);menu.style.display='none';};
+    menu.appendChild(d);
+  });
+  const c=document.createElement('div');c.textContent='Zamknij';c.onclick=()=>menu.style.display='none';menu.appendChild(c);
+  menu.style.display='block';
+}
+
+function useItem(i){
+  const it=inventory[i];
+  if(it.stats.hp){player.maxHp+=it.stats.hp;player.hp+=it.stats.hp;}
+  if(it.stats.sila)player.sila+=it.stats.sila;
+  if(it.stats.stamina){player.maxSta+=it.stats.stamina;player.sta+=it.stats.stamina;}
+  if(it.stats.magia)player.magia+=it.stats.magia;
+  inventory.splice(i,1);
+  log('Użyto: '+it.name);
+  saveGame();
+  render();
+}
+
+document.querySelectorAll('.dbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const d=b.dataset.dir;
+    if(d==='up')move(0,-1);
+    if(d==='down')move(0,1);
+    if(d==='left')move(-1,0);
+    if(d==='right')move(1,0);
+  });
+});
+document.getElementById('btnAttack').onclick=attackMenu;
+document.getElementById('btnWait').onclick=()=>{if(canAct()){log('Czekasz.');endTurn();}};
+document.getElementById('btnBag').onclick=showEQ;
+document.getElementById('btnMenu').onclick=()=>showScreen('menu');
+document.getElementById('btnNew').onclick=()=>showScreen('classSelect');
+document.getElementById('btnContinue').onclick=()=>{if(!loadGame())log('Brak zapisu.');};
+document.getElementById('btnWarrior').onclick=()=>newGame('warrior');
+document.getElementById('btnMage').onclick=()=>newGame('mage');
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'||e.key==='w')move(0,-1);
+  if(e.key==='ArrowDown'||e.key==='s')move(0,1);
+  if(e.key==='ArrowLeft'||e.key==='a')move(-1,0);
+  if(e.key==='ArrowRight'||e.key==='d')move(1,0);
+  if(e.key===' '||e.key==='j')attackMenu();
+});
+
+showScreen('menu');
+</script>
+
+</body>
+</html>
