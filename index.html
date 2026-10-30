@@ -302,7 +302,7 @@ function drawPlayer(){
   rect(x+9,y+6,14,14,'#e8d44d');
   const bodyColor=player.equip.armor?'#8b5a2b':(player.cls==='warrior'?'#4da3e8':'#9c27b0');
   rect(x+7,y+20,18,9,bodyColor);
-  rect(x+9,y+29,12,3,'#37474f'); // spodnie
+  rect(x+9,y+29,12,3,'#37474f');
   if(player.equip.helm)rect(x+8,y+4,16,5,'#9e9e9e');
   if(player.equip.ring)rect(x+22,y+26,4,4,'#ffb300');
   const w=player.equip.weapon;
@@ -344,25 +344,18 @@ function drawPreview(){
   preview.innerHTML='';
   const eq=player.equip;
   const R=(x,y,w,h,c)=>{const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('fill',c);preview.appendChild(r);};
-  // głowa
   R(5,2,6,5,'#e8d44d');
   if(eq.helm)R(4,1,8,3,'#9e9e9e');
-  // tors – zbroja
   R(4,8,8,4, eq.armor?'#8b5a2b':(player.cls==='warrior'?'#4da3e8':'#9c27b0'));
-  // spodnie
   R(5,12,2,3,'#37474f');
   R(9,12,2,3,'#37474f');
-  // pas z 3 potkami
   R(4,11,8,1,'#8b5a2b');
-  // ręka lewa – broń
   const w=eq.weapon;
   if(w==='miecz')R(12,8,1,5,'#c7f0d8');
   if(w==='wlocznia'){R(12,5,1,8,'#c7f0d8');R(11,4,3,2,'#e45c10');}
   if(w==='bulawa'){R(12,8,1,5,'#8b5a2b');R(11,6,3,3,'#9e9e9e');}
   if(w==='kostur'){R(12,6,1,7,'#8b5a2b');R(11,4,3,3,'#4da3e8');}
-  // ręka prawa
   R(3,8,1,4,'#e8d44d');
-  // pierścień
   if(eq.ring)R(3,12,1,1,'#ffb300');
 }
 
@@ -379,7 +372,7 @@ function updateHUD(){
     const bonus=bonusStat(key);
     const total=base+bonus;
     if(bonus>0){
-      return label+': <span class="base">'+total+'</span> <span class="bonus">('+base+' +'+bonus+')</span><br>';
+      return label+': <span class="base">'+total+'</span> <span class="bonus" title="Bonus z ekwipunku">('+base+' +'+bonus+')</span><br>';
     }
     return label+': <span class="base">'+total+'</span><br>';
   };
@@ -498,7 +491,6 @@ function move(dx,dy){
   if(isWall(nx,ny)){log('Tam jest ściana.');return;}
   if(isEnemyAt(nx,ny)){log('Pole zajęte przez wroga.');return;}
   if(movedThisTurn){
-    // najpierw wrogowie, potem gracz, potem nowa tura
     enemyActions();
     if(player.hp<=0)return;
     player.x=nx;player.y=ny;
