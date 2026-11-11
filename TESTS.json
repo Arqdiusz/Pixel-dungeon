@@ -1,0 +1,32 @@
+{
+  "runtime": {
+    "width": 420,
+    "height": 840,
+    "mapW": 64,
+    "mapH": 48,
+    "explore": 0.725,
+    "combat": 1.45,
+    "equipment": true,
+    "exitWidth": 3
+  },
+  "page_errors": [],
+  "syntax_checked_files": [
+    "assets/js/combat.js",
+    "assets/js/core.js",
+    "assets/js/equipment.js",
+    "assets/js/init-01.js",
+    "assets/js/init-02.js",
+    "assets/js/init-03.js",
+    "assets/js/render-1.js",
+    "assets/js/render-2.js",
+    "assets/js/story.js",
+    "assets/js/ui.js",
+    "assets/js/v33-world.js",
+    "assets/js/viewport.js",
+    "assets/js/world-1.js",
+    "assets/js/world-2.js"
+  ],
+  "source_statements_preserved": 281,
+  "base_sha256": "2641ce8063da2c2508cb91628bb665acfa72f5e3d17ddf2981a0c3816257cc60",
+  "scope": "Chromium: boot, freshState, maps, camera, equipment. Full campaign not tested."
+}
