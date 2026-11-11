@@ -1,1 +1,1 @@
-v34 — podział kodu; funkcjonalność v33.
+v35 — ruch konny, galop, regeneracja i szarża

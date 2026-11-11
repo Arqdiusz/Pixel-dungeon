@@ -1,0 +1,237 @@
+{
+  "syntax_ok": true,
+  "logic": {
+    "tests": [
+      {
+        "name": "Spokojna jazda: 1 pole, 45 sekund, koszt 0,25",
+        "ok": true,
+        "detail": {
+          "x": 9,
+          "elapsed": 45,
+          "power": 29.75
+        }
+      },
+      {
+        "name": "Spokojna jazda: +1 STA co 2 pola",
+        "ok": true,
+        "detail": {
+          "sta": 11
+        }
+      },
+      {
+        "name": "Marsz bez zmiany tempa: 60 s/pole, +1 STA co 3",
+        "ok": true,
+        "detail": {
+          "time": 180,
+          "sta": 11
+        }
+      },
+      {
+        "name": "Limit regeneracji nie obniża zasobu powyżej 70%",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Galop podstawowy: 2 pola, 50 s, koszt 2, bez regeneracji",
+        "ok": true,
+        "detail": {
+          "x": 10,
+          "elapsed": 50,
+          "power": 28,
+          "sta": 10
+        }
+      },
+      {
+        "name": "Galop zapisany jako jedno cofnięcie",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Cofnięcie przywraca czas, pozycję i energię",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Poziom za szarże nie odblokowuje 3 pól",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Osobna flaga szkolenia pozwala na 3 pola",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Przeszkoda: koszt i czas tylko za przebytą kratkę",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Uderzanie w ścianę niczego nie odnawia ani nie zużywa",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Galop zatrzymuje się przy rozmówcy",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Galop zatrzymuje się po zebraniu łupu",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Brak energii zatrzymuje dalszą jazdę",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Nie da się jechać bez energii",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Start w siodle: 2 ruchy",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Jedno pole za jedną akcję ruchu w walce",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Ruch w walce nie regeneruje staminy",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Zsiadanie: zostaje jeden ruch i nie kończy tury",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Po zsiadaniu zostaje krok pieszo",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Po zsiadaniu i kroku można zaatakować",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Następna tura pieszo ma 1 ruch",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Atak konny bez ruchu kończy turę",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Atak po jednym ruchu kończy turę",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Atak po dwóch ruchach kończy turę",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Wsiadanie nie zwiększa budżetu rozpoczętej tury",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Nie da się resetować ruchów wsiadaniem i zsiadaniem",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Dwie zmiany dosiadania zużywają dwa ruchy",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Szarża przez 1 puste pola",
+        "ok": true,
+        "detail": {
+          "x": 12,
+          "power": 15
+        }
+      },
+      {
+        "name": "Szarża przez 2 puste pola",
+        "ok": true,
+        "detail": {
+          "x": 13,
+          "power": 15
+        }
+      },
+      {
+        "name": "Szarża z odległości 4 jest zablokowana",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Szarża nie przeskakuje przeszkód",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Szarża nie przeskakuje zajętych pól",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Szarża jako akcja dostępna po zwykłym ruchu",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Walka automatycznie wyłącza galop, bez zsiadania",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Zapis zachowuje sekundy i energię",
+        "ok": true,
+        "detail": null
+      }
+    ],
+    "page_errors": []
+  },
+  "real_ui": {
+    "galop_keyboard": {
+      "x": 10,
+      "seconds": 50,
+      "power": 28,
+      "clock": "Dzień 1 · 08:00:50 · Poranek"
+    },
+    "mount_button_dismount": {
+      "mounted": false,
+      "moves": 1,
+      "budget": 2,
+      "turn": 1
+    },
+    "one_foot_step_after_dismount": {
+      "x": 9,
+      "moves": 2,
+      "round": 1
+    },
+    "attack_after_dismount_and_step": {
+      "round": 2,
+      "budget": 1
+    },
+    "horizontal_overflow": false,
+    "errors": []
+  },
+  "game_html_base_git_blob": "d27cafae5b26349d88af1330e11ba92d8a422ee4",
+  "game_html_base_verified": true,
+  "module_sha256": "0bb375f803ba64871c8b1d66521b6d572e67c4d59d89d0c7b7128bc92def9876",
+  "scope": "Local Chromium on v32 baseline engine; v34 module functions inspected on GitHub. Live deployment and full campaign not tested."
+}
