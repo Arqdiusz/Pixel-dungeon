@@ -1,7 +1,7 @@
 /* Giermek v35 — ruch, dosiadanie, szarża i zasoby podróży. Ładuj po init-03.js. */
 (() => {
 'use strict';
-const cfg={walkSeconds:60,rideSeconds:45,gallopSeconds:25,rideEnergy:.25,gallopEnergy:1,regenCap:.7};
+const cfg={walkSeconds:60,rideSeconds:30,gallopSeconds:15,rideEnergy:.10,gallopEnergy:.5,regenCap:1};
 const old={step:originalMove32,mount:toggleMount,start:startCombat,enemyPhase,render,panel,addTime};
 let stepClock=null;
 function travel(){if(!S)return null;const t=S.travel35??={};t.mode??='walk';t.seconds??=0;t.footSteps??={};t.rideSteps??={};return t;}
