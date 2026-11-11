@@ -1,0 +1,258 @@
+{
+  "logic": {
+    "tests": [
+      {
+        "name": "Marsz 1 pole = 1 minuta, bez energii konia",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Spokojna jazda 1 pole = 1 minuta, energia całkowita",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Jazda odnawia 1 STA co 2 pola",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Regeneracja nie przekracza maksimum",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Galop 2 pola = 1 minuta i podwójny wysiłek",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Galop to jedno cofnięcie",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Cofnięcie odtwarza minutę i wysiłek",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Energia spada o pełny punkt co 20 pól",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Ściana: zero czasu, wysiłku i regeneracji",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Przerwany galop: 1 minuta i wysiłek tylko za 1 pole",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Galop zatrzymuje się przy NPC",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "W v36 nie odblokowuje się jeszcze galop na 3 pola",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Pełny pasek 30 energii wystarcza na 10 godzin jazdy",
+        "ok": true,
+        "detail": {
+          "minutes": 600,
+          "power": 0
+        }
+      },
+      {
+        "name": "Koń nie jedzie dalej z zerem energii",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Ciągły galop męczy dwa razy szybciej: 5 godzin",
+        "ok": true,
+        "detail": {
+          "minutes": 300,
+          "power": 0
+        }
+      },
+      {
+        "name": "Koń zostaje w miejscu po zsiadaniu",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Gwizd przywołuje i od razu dosiada",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Cofnięcie gwizdania przywraca pozycję konia",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Przywołanie działa także po zmianie lokacji",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "W siodle budżet 2 ruchów",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Zsiadanie zostawia ruch i akcję",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Zsiadanie, krok i atak w jednej turze",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Wsiadanie nie dodaje ruchów",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Cios konny ma +100% obrażeń",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Cios konny kosztuje 4 energii plus 1 za turę",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Szarża zablokowana bez kosztu",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Przycisk szarży nieaktywny",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Gwizd jest zablokowany w walce",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Obrona +4 STA i ograniczone +1 energii, minus utrzymanie",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Nie da się w nieskończoność odnawiać konia obroną",
+        "ok": true,
+        "detail": {
+          "power": 18,
+          "pool": 0
+        }
+      },
+      {
+        "name": "Zerowa energia powoduje ucieczkę",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Wyczerpany koń nie wraca do walki",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Obóz odnawia energię i odnawialny zapas walki",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Migracja usuwa ułamki energii i resztę sekund",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Zapis nadal jest zgodny z v29",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Atak dozwolony bez użycia ruchów",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Atak dozwolony po jednym ruchu",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Atak dozwolony po dwóch ruchach",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Piesze przejście do innej mapy nie przesuwa konia",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Parowanie odnawia STA i energię z ograniczonego zapasu",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Udane strącenie wymusza zejście i blokuje powrót w tej walce",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Parowanie nie omija wyczerpanego zapasu regeneracji",
+        "ok": true,
+        "detail": null
+      },
+      {
+        "name": "Odpoczynek po obronie obozu odnawia także limity",
+        "ok": true,
+        "detail": null
+      }
+    ],
+    "page_errors": []
+  },
+  "real_ui": {
+    "keyboard_gallop": {
+      "x": 10,
+      "minutes": 481,
+      "energy": 30,
+      "work": 2,
+      "clock": "Dzień 1 · 08:01 · Poranek"
+    },
+    "whistle_after_dismount_and_walking": {
+      "mounted": true,
+      "x": 11,
+      "horseX": 11,
+      "minutes": 484,
+      "energy": 30
+    },
+    "dismount_walk_attack_with_animations": {
+      "round": 2,
+      "budget": 1,
+      "mounted": false
+    },
+    "horizontal_overflow": false,
+    "page_errors": []
+  },
+  "syntax_ok": true,
+  "game_html_base_git_blob": "96409b6b16ee4be44d2ac982697cea427849cd97",
+  "module_sha256": "047c75b3d029dd4db07d4d8dfa66e2b2e7a23301c3c7bf855fa759be766cf9e2",
+  "scope": "Local baseline v32 engine. Current v35 and relevant v34 modules inspected on GitHub. Full campaign and live deployment not tested."
+}

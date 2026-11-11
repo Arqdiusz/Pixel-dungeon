@@ -1,1 +1,1 @@
-v35 — ruch konny, galop, regeneracja i szarża
+v36 — nowy model podróży, energii i walki konnej; przywoływanie konia
