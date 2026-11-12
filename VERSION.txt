@@ -1,1 +1,1 @@
-v36 — nowy model podróży, energii i walki konnej; przywoływanie konia
+v37 — regeneracja staminy, zmęczenie, głód i prowiant

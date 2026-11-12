@@ -203,3 +203,21 @@
 | `worldTick` | `assets/js/world-1.js` |
 
 Nadpisania funkcji z v32 pozostają w init-*.js, w oryginalnej kolejności. Nie przenoś ich przed deklaracje bez testu.
+
+## Moduły patchujące (ładowane po rdzeniu)
+
+| Moduł | Plik | Nadpisuje |
+|---|---|---|
+| Podróż v36 | `assets/js/travel-v36.js` | `originalMove32`, `addTime`, `recoverHours`, `startCombat`, `enemyPhase`, `render`, `save`, `useExit`, `applyEnemyStrike`, `defend`, `forceFullRecovery`, `returnFromCamp`, `safeRecoveryAfterDefense` |
+| Survival v37 | `assets/js/survival-v37.js` | `defend`, `enemyPhase`, `applyEnemyStrike`, `addTime`, `recoverHours`, `render`, `save` |
+
+## API survival-v37.js (globalne)
+
+| Funkcja | Opis |
+|---|---|
+| `survivalAddFood(n, msg)` | Dodaje n porcji prowiantu |
+| `survivalAddRaw(kind, n, msg)` | Dodaje n surowców: 'fruit', 'veggie', 'meat' |
+| `survivalEat()` | Zużywa 1 porcję, nasyca głód |
+| `survivalCraft(recipe)` | Przetwarza surowce: 'dried_fruit', 'cooked_veg', 'roast_meat', 'mixed_stew', 'hearty_meal' |
+| `survivalGather(mapId, x, y, kind)` | Zbieranie z punktu na mapie, 1×/dzień |
+
