@@ -5,6 +5,47 @@ Oznaczenia: ✅ = wgrane do repo / GitHub Pages; 📦 = przygotowana paczka, nie
 
 ---
 
+## v38 — pixel-art HUD, pasek akcji zależny od trybu, dedupe kroniki 🔧
+
+**Data:** 2026-11-15 (w toku)
+
+### Dodane
+- **Płaski pixel-art styl przycisków HUD** (`game.css`): zero okręgów, zero gradientów —
+  wszystkie `.round` (d-pad, toolRow, attackRow, menuStack) dostały ostre narożniki
+  (`border-radius: 0`), jednolite ciemnozielone tło i dwupikselowy bevel (jasna linia
+  góra/lewo, ciemna dół/prawo) zamiast `radial-gradient`
+- **Pasek akcji zależny od trybu** (`ui-v38.js`): zamiast pokazywać wszystkie przyciski
+  naraz i tylko je wyłączać, moduł chowa (`hidden`) te nierelewantne w danym kontekście:
+  - `#attackRow` (atak/zamach/specjalny) — widoczny wyłącznie w walce
+  - narzędzia eksploracyjne (pola widzenia, wycentruj, rozmowa) — chowane w walce
+  - GALOP — tylko w siodle i poza walką
+  - GWIZD — tylko pieszo i poza walką
+  - przyciski uniwersalne (koń, obrona/obóz, cofnij, sakwa) zostają zawsze widoczne
+- **Deduplikacja kroniki**: identyczne, kolejne wpisy w logu (ten sam tekst, rodzaj
+  i miejsce) nie tworzą nowej linii — zamiast tego rośnie licznik na istniejącym wpisie,
+  wyświetlany jako „ xN" (np. „Marsz: −1 STA (zmęczenie podróżą). x4"). Działa zarówno
+  w panelu Kroniki, jak i w pasku „Ostatnie zdarzenia” na ekranie gry
+
+### Zmiany istniejących mechanik
+- `log()`: patchowany, by scalać identyczne kolejne wpisy zamiast je duplikować
+- `richLog()`: patchowany, by dopisywać licznik powtórzeń
+- `render()`: patchowany, by chować/pokazywać przyciski toolRow i attackRow wg trybu
+
+### Bez zmian
+- Format zapisu v29 (nowe pole `count` na wpisach `S.messages` jest opcjonalne
+  i w pełni kompatybilne wstecz)
+- Logika walki, podróży i survivalu z v36/v37 — moduł v38 tylko nadpisuje `render`,
+  `log` i `richLog`, niczego nie usuwa
+
+### Ograniczenia / znane braki
+- Ikony wciąż wektorowe (SVG z `path`/`circle`) — prawdziwy pixel-art (rect po rect,
+  siatka 32×32) przetestowany w osobnym artefakcie UI, czeka na wdrożenie
+- Sakwa jako pojedynczy przycisk zamiast osobnych mikstur w toolbelcie — do zrobienia
+- Joystick analogowy jako opcja sterowania — do zrobienia
+- Czcionki Redaction / Redaction 50 — ustalone w teście UI, nie wdrożone do gry
+
+---
+
 ## v37 — regeneracja staminy, zmęczenie, głód i prowiant 🔧
 
 **Data:** 2026-11-12 (w toku)

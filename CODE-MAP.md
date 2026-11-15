@@ -210,6 +210,7 @@ Nadpisania funkcji z v32 pozostają w init-*.js, w oryginalnej kolejności. Nie 
 |---|---|---|
 | Podróż v36 | `assets/js/travel-v36.js` | `originalMove32`, `addTime`, `recoverHours`, `startCombat`, `enemyPhase`, `render`, `save`, `useExit`, `applyEnemyStrike`, `defend`, `forceFullRecovery`, `returnFromCamp`, `safeRecoveryAfterDefense` |
 | Survival v37 | `assets/js/survival-v37.js` | `defend`, `enemyPhase`, `applyEnemyStrike`, `addTime`, `recoverHours`, `render`, `save` |
+| UI v38 | `assets/js/ui-v38.js` | `log` (dedupe powtórzeń), `richLog` (licznik „xN"), `render` (chowanie przycisków wg trybu: walk/horse/combat) |
 
 ## API survival-v37.js (globalne)
 
@@ -220,4 +221,14 @@ Nadpisania funkcji z v32 pozostają w init-*.js, w oryginalnej kolejności. Nie 
 | `survivalEat()` | Zużywa 1 porcję, nasyca głód |
 | `survivalCraft(recipe)` | Przetwarza surowce: 'dried_fruit', 'cooked_veg', 'roast_meat', 'mixed_stew', 'hearty_meal' |
 | `survivalGather(mapId, x, y, kind)` | Zbieranie z punktu na mapie, 1×/dzień |
+
+## UI v38 — zasady chowania przycisków
+
+| Tryb | Widoczne w `#toolRow` | `#attackRow` |
+|---|---|---|
+| Pieszo | koń, oko, wycentruj, obrona/obóz, cofnij, rozmowa, GWIZD | ukryty |
+| Konno | koń, oko, wycentruj, obrona/obóz, cofnij, rozmowa, GALOP | ukryty |
+| Walka | koń, obrona, cofnij, sakwa | widoczny |
+
+Przełącznik oparty o `fighting()` i `mounted()`, odświeżany w każdym `render()`. Przyciski uniwersalne (koń, obrona/obóz, cofnij) widoczne zawsze — mają inne działanie w zależności od kontekstu (np. `defend()` otwiera panel obozu poza walką).
 

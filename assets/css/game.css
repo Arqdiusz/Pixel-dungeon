@@ -5,3 +5,13 @@
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 #tutorialBanner{display:none!important}#attackRow small{white-space:pre-line;line-height:1.3}#localMap{touch-action:manipulation}#dialogTitle{font-size:24px}.eqNav32{display:flex;gap:3px;flex-wrap:wrap;margin:6px 0}.eqNav32 button{font:12px system-ui;padding:7px;margin:0}.eqArt32{width:48px;height:52px;image-rendering:pixelated}.eqHero32{width:102px;height:112px;image-rendering:pixelated}.eqHeroLine32{display:flex;align-items:center;gap:10px}.eqTools32{display:flex;gap:6px;margin:8px 0}.eqTools32 input,.eqTools32 select{min-width:0;width:50%;padding:9px;background:#183021;color:var(--p);border:1px solid #b89c6177}.eqColumns32{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center}.eqColumns32 .tile .kind{font:12px/1.3 system-ui;overflow-wrap:anywhere}.eqColumns32 .fine{font-size:11px!important}.eqColumns32 figure{margin:4px}.eqColumns32 figcaption{font:11px system-ui}.eqTable32{width:100%;border-collapse:collapse;font:11px system-ui}.eqTable32 td,.eqTable32 th{padding:8px 3px;border-bottom:1px solid #b89c6144;text-align:right}.eqTable32 th{font-weight:normal}.eqTable32 td:first-child,.eqTable32 th:first-child{text-align:left}.eqCompare32{border-top:1px solid #c5ae7488;padding-top:10px;margin-top:10px;scroll-margin-top:4px}.inventory .tile .kind{font:12px/1.3 system-ui;overflow-wrap:anywhere}.bodyGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.bodyGrid .tile .kind{font-size:13px}.eqColumns32 .tile{cursor:default}#dialogBody .eqNav32 p{margin:0}#recent{width:calc(100vw - 36px)}#enemyCard{max-height:230px}#enemyInfo{line-height:1.4}
+/* ── v38: pixel-art — płaskie, kwadratowe przyciski HUD; bez okręgów, bez gradientów ── */
+.round,#pad,#padCenter{border-radius:0!important}
+.round{background:#1e3028!important;border:2px solid #5a7a60!important;box-shadow:inset 1px 1px 0 #3a5a44,inset -1px -1px 0 #0c180f!important;transition:border-color .06s,background .06s,transform .06s}
+.round:hover{background:#253b2e!important;border-color:#e8c87c!important;box-shadow:inset 1px 1px 0 #4a6a50,inset -1px -1px 0 #0c180f,0 0 0 1px #a0884899!important}
+.round:active{background:#162218!important;border-color:#5a7a60!important;box-shadow:inset 1px 1px 0 #0c180f,inset -1px -1px 0 #3a5a44!important;transform:translate(1px,1px)}
+.round:disabled{box-shadow:none!important;transform:none!important}
+#pad{background:#0e1a12cc!important}
+#padCenter{background:#0d1710cc!important;border:1px solid #b89c6180!important}
+/* ── v38: licznik powtórzeń w kronice — "Marsz: −1 STA… x4" ── */
+.repeatCount{opacity:.72;font-weight:600;margin-left:3px}
