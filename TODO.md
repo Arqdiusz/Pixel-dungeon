@@ -15,6 +15,7 @@
 - [x] Płaskie kwadratowe przyciski HUD (bez okręgów, bez gradientów) — `.round`, `#pad`, `#padCenter`
 - [x] Pasek akcji zależny od trybu: atak tylko w walce; oko/wycentruj/rozmowa chowane w walce; galop/gwizd tylko gdy relewantne
 - [x] Dedupe kroniki: identyczne kolejne wpisy → jeden wpis z licznikiem „xN"
+- [x] Ruch w pełni turowy: świat (patrole, wędrujący NPC) rusza się wyłącznie wraz z ruchem gracza, nie na żywym zegarze
 - [ ] Prawdziwe ikony pixel-artowe (rect po rect, 32×32) — na razie ikony z init-01.js bez zmian, test w osobnym artefakcie
 - [ ] Sakwa (bag) jako pojedynczy przycisk zamiast osobnych mikstur w toolbelcie
 - [ ] Joystick analogowy jako opcja sterowania (obok D-pada), wybór w ustawieniach

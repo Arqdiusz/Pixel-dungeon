@@ -44,6 +44,21 @@ Oznaczenia: ✅ = wgrane do repo / GitHub Pages; 📦 = przygotowana paczka, nie
 - Joystick analogowy jako opcja sterowania — do zrobienia
 - Czcionki Redaction / Redaction 50 — ustalone w teście UI, nie wdrożone do gry
 
+### Dodane (c.d.) — ruch w pełni turowy (`turnbased-v38.js`)
+- **Świat rusza się wyłącznie wraz z graczem.** Wcześniej `loop()` wywoływał
+  `worldTick()` co 850 ms na żywym zegarze (`requestAnimationFrame`), więc patrole
+  i wędrujący NPC-e poruszali się także wtedy, gdy gracz stał w miejscu — łamało to
+  turowy klimat gry
+- Zegarowe wywołanie `worldTick()` usunięte z `loop()`; zamiast tego `move()` wywołuje
+  `worldTick()` dokładnie raz, zaraz po każdym udanym kroku gracza (pozycja bohatera
+  lub `S.steps` faktycznie się zmienia) — także przy przytrzymanym kierunku (auto-krok
+  co 155 ms), więc świat idzie krok w krok z graczem
+- Odbicie się od ściany / zablokowany ruch **nie** zalicza tury światu — potwierdzone
+  testem: 10 prób ruchu w przeszkodę, z czego 1 się powiodła → `worldTick` wzrósł
+  tylko o 1
+- Bezczynność: zweryfikowano, że 3 sekundy stania w miejscu nie zmieniają stanu świata
+  (wcześniej po ~850 ms i tak następowałby tick)
+
 ---
 
 ## v37 — regeneracja staminy, zmęczenie, głód i prowiant 🔧

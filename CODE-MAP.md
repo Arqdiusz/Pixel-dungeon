@@ -211,6 +211,7 @@ Nadpisania funkcji z v32 pozostają w init-*.js, w oryginalnej kolejności. Nie 
 | Podróż v36 | `assets/js/travel-v36.js` | `originalMove32`, `addTime`, `recoverHours`, `startCombat`, `enemyPhase`, `render`, `save`, `useExit`, `applyEnemyStrike`, `defend`, `forceFullRecovery`, `returnFromCamp`, `safeRecoveryAfterDefense` |
 | Survival v37 | `assets/js/survival-v37.js` | `defend`, `enemyPhase`, `applyEnemyStrike`, `addTime`, `recoverHours`, `render`, `save` |
 | UI v38 | `assets/js/ui-v38.js` | `log` (dedupe powtórzeń), `richLog` (licznik „xN"), `render` (chowanie przycisków wg trybu: walk/horse/combat) |
+| Turowy ruch v38 | `assets/js/turnbased-v38.js` | `move` (wywołuje `worldTick()` po udanym kroku gracza), `loop` (usunięte zegarowe wywołanie `worldTick()`) |
 
 ## API survival-v37.js (globalne)
 
