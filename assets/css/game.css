@@ -15,3 +15,5 @@
 #padCenter{background:#0d1710cc!important;border:1px solid #b89c6180!important}
 /* ── v38: licznik powtórzeń w kronice — "Marsz: −1 STA… x4" ── */
 .repeatCount{opacity:.72;font-weight:600;margin-left:3px}
+/* ── v38: tło ekranu startowego — zachowaj proporcje 640×360, nie rozciągaj ── */
+#titleLandscape{object-fit:cover;object-position:center}
